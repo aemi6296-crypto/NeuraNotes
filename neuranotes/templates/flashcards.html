@@ -1,0 +1,68 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container">
+
+    <h1 class="page-title">🃏 Flashcards</h1>
+
+    <!-- Subjects Grid -->
+    <h2 style="color: var(--accent-pink); margin-bottom: 20px;">📚 Choose a Subject</h2>
+
+    {% if subjects %}
+    <div class="subjects-grid" style="margin-bottom: 40px;">
+        {% for subject in subjects %}
+        <a href="/flashcards/{{ subject.id }}" class="subject-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>{{ subject.name }}</h3>
+                <div style="width: 15px; height: 15px; border-radius: 50%;
+                            background: {{ subject.color }};
+                            box-shadow: 0 0 8px {{ subject.color }};"></div>
+            </div>
+            <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 10px;">
+                Click to manage flashcards →
+            </p>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card" style="text-align: center; padding: 40px; margin-bottom: 30px;">
+        <p style="color: var(--text-secondary);">No subjects yet! Add subjects first.</p>
+        <a href="/subjects" class="btn btn-primary" style="margin-top: 15px;">Add Subject</a>
+    </div>
+    {% endif %}
+
+    <!-- Results History -->
+    <h2 style="color: var(--accent-pink); margin-bottom: 20px;">📊 Quiz History</h2>
+
+    {% if results %}
+    {% for result in results %}
+    <div class="goal-item">
+        <div>
+            <div class="goal-title">{{ result.subject_name }}</div>
+            <div class="goal-deadline">
+                🎯 {{ result.difficulty|capitalize }} |
+                ✅ {{ result.score }}/{{ result.total }} |
+                📅 {{ result.date }}
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div style="font-size: 1.5rem; font-weight: 700;
+                        color: {% if result.score/result.total >= 0.8 %}var(--success)
+                               {% elif result.score/result.total >= 0.5 %}#ffd700
+                               {% else %}var(--danger){% endif %};">
+                {{ ((result.score / result.total) * 100)|int }}%
+            </div>
+            <a href="/flashcard/result/delete/{{ result.id }}"
+               class="btn btn-danger btn-sm"
+               onclick="return confirm('Delete this result?')">🗑️</a>
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="card" style="text-align: center; padding: 30px;">
+        <p style="color: var(--text-secondary);">No quiz history yet — take a quiz!</p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

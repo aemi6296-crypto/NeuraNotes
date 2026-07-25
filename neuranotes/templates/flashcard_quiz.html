@@ -1,0 +1,336 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container">
+
+{% if cards %}
+<!-- Quiz Interface -->
+<div id="quizContainer">
+
+    <!-- Progress Bar -->
+    <div style="margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span style="color: var(--text-secondary);">
+                Question <span id="currentNum">1</span>/{{ cards|length }}
+            </span>
+            <span style="color: var(--accent-pink);">
+                ✅ <span id="scoreDisplay">0</span> correct
+            </span>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="quizProgress" style="width: 0%;"></div>
+        </div>
+    </div>
+
+    <!-- Flashcard -->
+    <div class="flashcard-container" id="flashcardContainer">
+        <div class="flashcard" id="flashcard" onclick="flipCard()">
+            <div class="flashcard-front" id="cardFront">
+                <div class="card-design" id="cardDesign"></div>
+                <div class="card-label">QUESTION</div>
+                <div class="card-text" id="questionText"></div>
+                <div class="card-hint">Click to reveal answer</div>
+            </div>
+            <div class="flashcard-back" id="cardBack">
+                <div class="card-design" id="cardDesignBack"></div>
+                <div class="card-label">ANSWER</div>
+                <div class="card-text" id="answerText"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Options -->
+    <div id="optionsContainer" style="margin-top: 25px; display: none;">
+        <p style="color: var(--text-secondary); text-align: center; margin-bottom: 15px;">
+            Did you get it right?
+        </p>
+        <div style="display: flex; gap: 15px; justify-content: center;">
+            <button onclick="answer(true)" class="btn btn-success" style="flex: 1; max-width: 200px; padding: 15px; font-size: 1rem;">
+                ✅ Correct
+            </button>
+            <button onclick="answer(false)" class="btn btn-danger" style="flex: 1; max-width: 200px; padding: 15px; font-size: 1rem;">
+                ❌ Wrong
+            </button>
+        </div>
+        <div id="correctAnswer" style="display: none; margin-top: 15px; padding: 15px;
+             background: rgba(168,230,207,0.1); border: 1px solid var(--success);
+             border-radius: 8px; color: var(--success); text-align: center;">
+        </div>
+    </div>
+
+</div>
+
+<!-- Results Screen (hidden initially) -->
+<div id="resultsScreen" style="display: none; text-align: center; padding: 40px 0;">
+    <div style="font-size: 5rem; margin-bottom: 20px;" id="resultEmoji">🎉</div>
+    <h1 class="page-title" id="resultTitle">Quiz Complete!</h1>
+    <div class="card" style="max-width: 400px; margin: 0 auto 30px;">
+        <div class="stat-number" id="finalScore" style="font-size: 3rem;"></div>
+        <div class="stat-label">Your Score</div>
+        <div style="margin-top: 15px; color: var(--text-secondary);" id="resultMessage"></div>
+    </div>
+    <form method="POST" action="/flashcards/result" id="resultForm">
+        <input type="hidden" name="subject_id" value="{{ subject.id }}">
+        <input type="hidden" name="score" id="finalScoreInput">
+        <input type="hidden" name="total" value="{{ cards|length }}">
+        <input type="hidden" name="difficulty" value="{{ difficulty }}">
+        <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+            <button type="submit" class="btn btn-success" style="padding: 12px 30px;">
+                💾 Save Result
+            </button>
+            <a href="/flashcards/{{ subject.id }}" class="btn btn-primary" style="padding: 12px 30px;">
+                🔄 Try Again
+            </a>
+            <a href="/flashcards" class="btn btn-primary" style="padding: 12px 30px;">
+                🏠 Back
+            </a>
+        </div>
+    </form>
+</div>
+
+{% else %}
+<div class="card" style="text-align: center; padding: 60px;">
+    <p style="font-size: 3rem; margin-bottom: 20px;">🃏</p>
+    <p style="color: var(--text-secondary); font-size: 1.1rem;">No flashcards in this category!</p>
+    <a href="/flashcards/{{ subject.id }}" class="btn btn-primary" style="margin-top: 20px;">Add Cards</a>
+</div>
+{% endif %}
+
+</div>
+
+<!-- Flashcard Data -->
+<script>
+const cards = [
+    {% for card in cards %}
+    {
+        question: {{ card.question | tojson }},
+        answer: {{ card.answer | tojson }}
+    },
+    {% endfor %}
+];
+
+const designs = [
+    // Design 1: Bow (like pic 1)
+    `<div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);font-size:2rem;">🎀</div>
+     <div style="position:absolute;top:0;left:0;right:0;bottom:0;border:3px solid rgba(200,180,196,0.3);border-radius:20px;margin:8px;"></div>`,
+
+    // Design 2: Grid pattern (like pic 2)
+    `<div style="position:absolute;top:0;left:0;right:0;bottom:0;
+     background-image:repeating-linear-gradient(rgba(200,180,196,0.1) 0,rgba(200,180,196,0.1) 1px,transparent 1px,transparent 20px),
+     repeating-linear-gradient(90deg,rgba(200,180,196,0.1) 0,rgba(200,180,196,0.1) 1px,transparent 1px,transparent 20px);
+     border-radius:16px;"></div>`,
+
+    // Design 3: Hearts (like pic 3)
+    `<div style="position:absolute;top:10px;left:15px;font-size:1rem;opacity:0.4;">💜💜💜</div>
+     <div style="position:absolute;bottom:10px;right:15px;font-size:1rem;opacity:0.4;">💜💜💜</div>`,
+
+    // Design 4: Dots pattern (like pic 5)
+    `<div style="position:absolute;top:0;left:0;right:0;bottom:0;
+     background-image:radial-gradient(rgba(200,180,196,0.2) 1px,transparent 1px);
+     background-size:15px 15px;border-radius:16px;"></div>
+     <div style="position:absolute;top:0;left:0;right:0;bottom:0;
+     border:2px dashed rgba(200,180,196,0.2);border-radius:16px;margin:8px;"></div>`,
+
+    // Design 5: Flowers (like pic 7)
+    `<div style="position:absolute;top:8px;left:8px;font-size:1.2rem;opacity:0.5;">🌸</div>
+     <div style="position:absolute;top:8px;right:8px;font-size:1.2rem;opacity:0.5;">🌸</div>
+     <div style="position:absolute;bottom:8px;left:8px;font-size:1.2rem;opacity:0.5;">🌸</div>
+     <div style="position:absolute;bottom:8px;right:8px;font-size:1.2rem;opacity:0.5;">🌸</div>`,
+
+    // Design 6: Lines (like pic 8)
+    `<div style="position:absolute;top:0;left:0;right:0;bottom:0;
+     background-image:repeating-linear-gradient(transparent,transparent 30px,rgba(200,180,196,0.15) 30px,rgba(200,180,196,0.15) 31px);
+     border-radius:16px;"></div>
+     <div style="position:absolute;top:10px;left:10px;font-size:1rem;opacity:0.3;">✨</div>`,
+];
+
+let currentIndex = 0;
+let score = 0;
+let isFlipped = false;
+let currentDesignIndex = 0;
+
+function loadCard() {
+    if (currentIndex >= cards.length) {
+        showResults();
+        return;
+    }
+
+    const card = cards[currentIndex];
+    isFlipped = false;
+
+    document.getElementById('flashcard').style.transform = 'rotateY(0deg)';
+    document.getElementById('questionText').textContent = card.question;
+    document.getElementById('answerText').textContent = card.answer;
+    document.getElementById('currentNum').textContent = currentIndex + 1;
+    document.getElementById('optionsContainer').style.display = 'none';
+    document.getElementById('correctAnswer').style.display = 'none';
+
+    // Rotating designs
+    const design = designs[currentDesignIndex % designs.length];
+    document.getElementById('cardDesign').innerHTML = design;
+    document.getElementById('cardDesignBack').innerHTML = design;
+    currentDesignIndex++;
+
+    // Progress
+    const progress = (currentIndex / cards.length) * 100;
+    document.getElementById('quizProgress').style.width = progress + '%';
+}
+
+function flipCard() {
+    if (isFlipped) return;
+    isFlipped = true;
+    document.getElementById('flashcard').style.transform = 'rotateY(180deg)';
+    setTimeout(() => {
+        document.getElementById('optionsContainer').style.display = 'block';
+    }, 400);
+}
+
+function answer(correct) {
+    if (correct) {
+        score++;
+        document.getElementById('scoreDisplay').textContent = score;
+    } else {
+        // Show correct answer
+        const correctDiv = document.getElementById('correctAnswer');
+        correctDiv.textContent = '✅ Correct Answer: ' + cards[currentIndex].answer;
+        correctDiv.style.display = 'block';
+
+        setTimeout(() => {
+            currentIndex++;
+            loadCard();
+        }, 2000);
+        return;
+    }
+    currentIndex++;
+    loadCard();
+}
+
+function showResults() {
+    document.getElementById('quizContainer').style.display = 'none';
+    document.getElementById('resultsScreen').style.display = 'block';
+
+    const total = cards.length;
+    const percentage = Math.round((score / total) * 100);
+
+    document.getElementById('finalScore').textContent = score + '/' + total;
+    document.getElementById('finalScoreInput').value = score;
+    document.getElementById('quizProgress').style.width = '100%';
+
+    let emoji, message;
+    if (percentage >= 90) {
+        emoji = '🏆';
+        message = 'Outstanding! You are a master!';
+    } else if (percentage >= 70) {
+        emoji = '🎉';
+        message = 'Great job! Keep it up!';
+    } else if (percentage >= 50) {
+        emoji = '💪';
+        message = 'Good effort! Practice more!';
+    } else {
+        emoji = '📚';
+        message = 'Keep studying! You\'ll get better!';
+    }
+
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = message + ` (${percentage}%)`;
+}
+
+// Start quiz
+loadCard();
+</script>
+
+<!-- Flashcard CSS -->
+<style>
+.flashcard-container {
+    perspective: 1000px;
+    height: 320px;
+    margin: 0 auto;
+    max-width: 500px;
+}
+
+.flashcard {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s ease;
+    cursor: pointer;
+}
+
+.flashcard-front,
+.flashcard-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    overflow: hidden;
+}
+
+.flashcard-front {
+    background: linear-gradient(135deg, #3a2d3d, #2f2433);
+    border: 2px solid var(--accent-pink);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+.flashcard-back {
+    background: linear-gradient(135deg, #2f2433, #3a2d3d);
+    border: 2px solid var(--accent-plum);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    transform: rotateY(180deg);
+}
+
+.card-design {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+.card-label {
+    font-size: 0.7rem;
+    letter-spacing: 3px;
+    color: var(--accent-plum);
+    margin-bottom: 15px;
+    position: relative;
+    z-index: 1;
+}
+
+.card-text {
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    text-align: center;
+    line-height: 1.6;
+    position: relative;
+    z-index: 1;
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+.card-hint {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    opacity: 0.5;
+    margin-top: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+@media (max-width: 768px) {
+    .flashcard-container {
+        height: 280px;
+    }
+    .card-text {
+        font-size: 1rem;
+    }
+}
+</style>
+
+{% endblock %}
