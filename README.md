@@ -1,6 +1,11 @@
-# NeuraNotes
+# 🧠 NeuraNotes
 
 #### Video Demo: https://youtu.be/2M-Og2kaawA
+
+## 🌐 Live Site
+
+Check out the live version here:
+👉 [https://aiman6926.pythonanywhere.com](https://aiman6926.pythonanywhere.com)
 
 #### Description:
 
