@@ -18,7 +18,7 @@ NeuraNotes is a full-stack Flask study companion app. It brings subject organiza
       <img src="dashboard.png" alt="Dashboard" width="100%">
     </td>
     <td width="50%">
-      <img src="screenshots/subjects.png" alt="Subjects" width="100%">
+      <img src="subjects.png" alt="Subjects" width="100%">
     </td>
   </tr>
   <tr>
@@ -27,10 +27,10 @@ NeuraNotes is a full-stack Flask study companion app. It brings subject organiza
   </tr>
   <tr>
     <td width="50%">
-      <img src="screenshots/notes-pomodoro.png" alt="Notes & Pomodoro" width="100%">
+      <img src="pomodoro.png" alt="Notes & Pomodoro" width="100%">
     </td>
     <td width="50%">
-      <img src="screenshots/flashcards.png" alt="Flashcards" width="100%">
+      <img src="flashcards.png" alt="Flashcards" width="100%">
     </td>
   </tr>
   <tr>
@@ -126,10 +126,10 @@ neuranotes/
   </tr>
   <tr>
     <td width="50%">
-      <img src="screenshots/pdf-presentation.png" alt="PDF to Presentation" width="100%">
+      <img src="pdf-presentation.png" alt="PDF to Presentation" width="100%">
     </td>
     <td width="50%">
-      <img src="screenshots/youtube-notes.png" alt="YouTube to Notes" width="100%">
+      <img src="youtube-notes.png" alt="YouTube to Notes" width="100%">
     </td>
   </tr>
   <tr>
@@ -138,10 +138,10 @@ neuranotes/
   </tr>
   <tr>
     <td width="50%">
-      <img src="screenshots/register.png" alt="Register / Login" width="100%">
+      <img src="register.png" alt="Register / Login" width="100%">
     </td>
     <td width="50%">
-      <img src="screenshots/nexa-chat.png" alt="Nexa AI Assistant" width="100%">
+      <img src="nexa-chat.png" alt="Nexa AI Assistant" width="100%">
     </td>
   </tr>
   <tr>
