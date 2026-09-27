@@ -1,0 +1,147 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container">
+
+    <div class="page-header-row">
+        <div>
+            <h1 class="page-title">
+                <i data-lucide="layers"></i>
+                {{ subject.name }}
+            </h1>
+            <p class="page-subtitle">Create flashcards and quiz yourself on this subject</p>
+        </div>
+        <a href="/flashcards" class="btn btn-primary">← Back</a>
+    </div>
+
+    <!-- Add Flashcard -->
+    <div class="card" style="margin-bottom: 20px;">
+        <div class="card-header-flex">
+            <div class="card-icon-badge"><i data-lucide="plus"></i></div>
+            <div>
+                <h2 class="card-title-main">Add Flashcard</h2>
+                <p class="card-subtitle">Write a question and its answer to add a new card</p>
+            </div>
+        </div>
+        <form method="POST" action="/flashcards/{{ subject.id }}">
+            <div class="form-group">
+                <label><i data-lucide="help-circle" class="icon-inline"></i> Question</label>
+                <textarea name="question" placeholder="Enter your question..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label><i data-lucide="check-square" class="icon-inline"></i> Answer</label>
+                <textarea name="answer" placeholder="Enter the answer..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label><i data-lucide="signal" class="icon-inline"></i> Difficulty</label>
+                <select name="difficulty">
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+            <div class="submit-row">
+                <button type="submit" class="btn-add-subject"><i data-lucide="plus"></i> Add Flashcard</button>
+                <span class="form-tip"><i data-lucide="lightbulb"></i> Short, clear questions work best</span>
+            </div>
+        </form>
+    </div>
+
+    <!-- Start Quiz Buttons -->
+    <div class="card" style="margin-bottom: 20px;">
+        <div class="card-header-flex">
+            <div class="card-icon-badge"><i data-lucide="target"></i></div>
+            <div>
+                <h2 class="card-title-main">Start Quiz</h2>
+                <p class="card-subtitle">Pick a difficulty to test yourself</p>
+            </div>
+        </div>
+        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+            <a href="/flashcards/quiz/{{ subject.id }}/easy"
+               class="btn btn-success" style="flex: 1; text-align: center; padding: 15px;">
+                <span class="diff-dot diff-easy"></span>Easy ({{ easy|length }} cards)
+            </a>
+            <a href="/flashcards/quiz/{{ subject.id }}/medium"
+               class="btn btn-primary" style="flex: 1; text-align: center; padding: 15px;">
+                <span class="diff-dot diff-medium"></span>Medium ({{ medium|length }} cards)
+            </a>
+            <a href="/flashcards/quiz/{{ subject.id }}/hard"
+               class="btn btn-danger" style="flex: 1; text-align: center; padding: 15px;">
+                <span class="diff-dot diff-hard"></span>Hard ({{ hard|length }} cards)
+            </a>
+        </div>
+    </div>
+
+    <!-- Easy Cards -->
+    {% if easy %}
+    <div class="section-header-row">
+        <h2 class="section-title"><span class="diff-dot diff-easy"></span>Easy Cards</h2>
+        <span class="total-badge">{{ easy|length }} Cards</span>
+    </div>
+    {% for card in easy %}
+    <div class="note-list-item" style="margin-bottom: 10px;">
+        <div>
+            <div style="color: var(--text-primary); font-weight: 500;">Q: {{ card.question }}</div>
+            <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 5px;">A: {{ card.answer }}</div>
+        </div>
+        <a href="/flashcard/delete/{{ card.id }}"
+           class="btn btn-danger btn-sm"
+           onclick="return confirm('Delete this card?')">
+            <i data-lucide="trash-2" style="width:14px; height:14px;"></i>
+        </a>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Medium Cards -->
+    {% if medium %}
+    <div class="section-header-row">
+        <h2 class="section-title"><span class="diff-dot diff-medium"></span>Medium Cards</h2>
+        <span class="total-badge">{{ medium|length }} Cards</span>
+    </div>
+    {% for card in medium %}
+    <div class="note-list-item" style="margin-bottom: 10px;">
+        <div>
+            <div style="color: var(--text-primary); font-weight: 500;">Q: {{ card.question }}</div>
+            <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 5px;">A: {{ card.answer }}</div>
+        </div>
+        <a href="/flashcard/delete/{{ card.id }}"
+           class="btn btn-danger btn-sm"
+           onclick="return confirm('Delete this card?')">
+            <i data-lucide="trash-2" style="width:14px; height:14px;"></i>
+        </a>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Hard Cards -->
+    {% if hard %}
+    <div class="section-header-row">
+        <h2 class="section-title"><span class="diff-dot diff-hard"></span>Hard Cards</h2>
+        <span class="total-badge">{{ hard|length }} Cards</span>
+    </div>
+    {% for hard_card in hard %}
+    <div class="note-list-item" style="margin-bottom: 10px;">
+        <div>
+            <div style="color: var(--text-primary); font-weight: 500;">Q: {{ hard_card.question }}</div>
+            <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 5px;">A: {{ hard_card.answer }}</div>
+        </div>
+        <a href="/flashcard/delete/{{ hard_card.id }}"
+           class="btn btn-danger btn-sm"
+           onclick="return confirm('Delete this card?')">
+            <i data-lucide="trash-2" style="width:14px; height:14px;"></i>
+        </a>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if not easy and not medium and not hard %}
+    <div class="card empty-state">
+        <i data-lucide="layers"></i>
+        <p style="font-size: 1.05rem; margin-bottom: 6px;">No flashcards yet</p>
+        <p style="font-size: 0.85rem; opacity: 0.8;">Add one above to start practicing.</p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

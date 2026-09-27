@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuraNotes</title>
+    <script>
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode-pending');
+        }
+    </script>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%20fill%3D%22none%22%3E%0A%3Cpath%20d%3D%22M30%2012c-7-3-15%202-15%2010-6%201-9%206-7%2012-4%205-1%2013%205%2015%200%207%208%2010%2013%206%202%205%209%205%2011%200V17c-2-4-3-5-7-5Z%22%20stroke%3D%22%23D6A7E8%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%3Cpath%20d%3D%22M30%2020v35M30%2028l-7%205m7%204%207-5m-7%2012-6%205%22%20stroke%3D%22%23D6A7E8%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%2F%3E%0A%3Ccircle%20cx%3D%2223%22%20cy%3D%2233%22%20r%3D%222%22%20fill%3D%22%23D6A7E8%22%2F%3E%0A%3Ccircle%20cx%3D%2237%22%20cy%3D%2232%22%20r%3D%222%22%20fill%3D%22%23D6A7E8%22%2F%3E%0A%3Cpath%20d%3D%22M38%2014h13l7%207v29c0%203-2%205-5%205H38V14Z%22%20stroke%3D%22%23D6A7E8%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%3Cpath%20d%3D%22M51%2014v8h7M43%2032h9M43%2039h9M43%2046h7%22%20stroke%3D%22%23D6A7E8%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%3C%2Fsvg%3E">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body onload="document.documentElement.classList.remove('dark-mode-pending')">
+
+{% if session.user_id %}
+
+<button class="hamburger" id="hamburger" onclick="toggleSidebar()">
+    <span></span>
+    <span></span>
+    <span></span>
+</button>
+
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <a href="/" class="sidebar-brand">
+            <svg class="brand-icon" style="width: 34px; height: 34px; flex-shrink: 0;" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M30 12c-7-3-15 2-15 10-6 1-9 6-7 12-4 5-1 13 5 15 0 7 8 10 13 6 2 5 9 5 11 0V17c-2-4-3-5-7-5Z" stroke="#D6A7E8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M30 20v35M30 28l-7 5m7 4 7-5m-7 12-6 5" stroke="#D6A7E8" stroke-width="3" stroke-linecap="round"/>
+                <circle cx="23" cy="33" r="2" fill="#D6A7E8"/>
+                <circle cx="37" cy="32" r="2" fill="#D6A7E8"/>
+                <path d="M38 14h13l7 7v29c0 3-2 5-5 5H38V14Z" stroke="#D6A7E8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M51 14v8h7M43 32h9M43 39h9M43 46h7" stroke="#D6A7E8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="brand-text">Neura<span>Notes</span></span>
+        </a>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="/"><i data-lucide="layout-dashboard" class="nav-icon"></i> Dashboard</a>
+        <a href="/subjects"><i data-lucide="book-open" class="nav-icon"></i> Subjects</a>
+        <a href="/goals"><i data-lucide="target" class="nav-icon"></i> Goals</a>
+        <a href="/analytics"><i data-lucide="bar-chart-3" class="nav-icon"></i> Analytics</a>
+        <a href="/flashcards"><i data-lucide="layers" class="nav-icon"></i> Flashcards</a>
+        <a href="/youtube_notes"><i data-lucide="play-circle" class="nav-icon"></i> YouTube Notes</a>
+    </nav>
+    <div class="sidebar-footer">
+        <a href="/logout"><i data-lucide="log-out" class="nav-icon"></i> Logout</a>
+        <a href="#"
+           onclick="event.preventDefault(); showConfirm('Delete your account permanently? All your subjects, notes, goals and flashcards will be lost.', function(){ window.location='/account/delete'; })"
+           class="sidebar-delete-link">
+            <i data-lucide="user-x" class="nav-icon" style="width:17px; height:17px;"></i> Delete Account
+        </a>
+    </div>
+</div>
+
+<div class="main-content" id="mainContent">
+
+{% endif %}
+
+{% block content %}{% endblock %}
+
+{% if session.user_id %}
+
+</div>
+
+<script>
+let sidebarOpen = true;
+
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+
+    if (sidebarOpen) {
+        sidebar.style.transform = 'translateX(-100%)';
+        mainContent.style.marginLeft = '0';
+        sidebarOpen = false;
+    } else {
+        sidebar.style.transform = 'translateX(0)';
+        mainContent.style.marginLeft = '260px';
+        sidebarOpen = true;
+    }
+}
+
+if (window.innerWidth <= 768) {
+    sidebarOpen = false;
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        if (sidebar) sidebar.style.transform = 'translateX(-100%)';
+        if (mainContent) mainContent.style.marginLeft = '0';
+    });
+}
+function toggleMenu(event, menuId) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    document.querySelectorAll('.dropdown-menu').forEach(m => {
+        if (m.id !== menuId) m.classList.remove('show');
+    });
+
+    document.getElementById(menuId).classList.toggle('show');
+}
+
+document.addEventListener('click', function() {
+    document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+});
+</script>
+
+{% endif %}
+<!-- Custom Confirm Dialog -->
+<div id="customConfirm" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+     background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:16px;
+                padding:30px; max-width:350px; width:90%; text-align:center;
+                box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+        <div style="display:flex; justify-content:center; margin-bottom:15px;">
+            <i data-lucide="trash-2" style="width:32px; height:32px; color:var(--danger);"></i>
+        </div>
+        <div id="confirmMessage" style="color:var(--text-primary); font-size:1rem;
+             line-height:1.6; margin-bottom:25px;"></div>
+        <div style="display:flex; gap:12px; justify-content:center;">
+            <button id="confirmOk"
+                    style="padding:10px 28px; background:transparent; color:var(--danger);
+                           border:2px solid var(--danger); border-radius:8px; cursor:pointer;
+                           font-size:0.95rem; font-weight:600; transition:all 0.2s ease;
+                           font-family:'Inter',sans-serif;"
+                    onmouseover="this.style.background='rgba(255,122,147,0.15)'"
+                    onmouseout="this.style.background='transparent'">
+                Delete
+            </button>
+            <button id="confirmCancel"
+                    style="padding:10px 28px; background:transparent; color:var(--text-primary);
+                           border:2px solid var(--border-color); border-radius:8px; cursor:pointer;
+                           font-size:0.95rem; font-weight:600; transition:all 0.2s ease;
+                           font-family:'Inter',sans-serif;"
+                    onmouseover="this.style.background='rgba(216,174,220,0.1)'"
+                    onmouseout="this.style.background='transparent'">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<svg style="display:none;">
+    <symbol id="icon-brain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/>
+        <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/>
+    </symbol>
+</svg>
+
+<script>
+function showConfirm(message, onConfirm) {
+    const dialog = document.getElementById('customConfirm');
+    document.getElementById('confirmMessage').textContent = message;
+    dialog.style.display = 'flex';
+
+    document.getElementById('confirmOk').onclick = function() {
+        dialog.style.display = 'none';
+        onConfirm();
+    };
+
+    document.getElementById('confirmCancel').onclick = function() {
+        dialog.style.display = 'none';
+    };
+}
+
+function applyTheme(isDark) {
+    document.body.classList.toggle('dark-mode', isDark);
+    var icon = document.getElementById('themeIcon');
+    if (icon) {
+        icon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+        if (window.lucide) lucide.createIcons();
+    }
+}
+
+function toggleTheme() {
+    var isDark = !document.body.classList.contains('dark-mode');
+    applyTheme(isDark);
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.lucide) lucide.createIcons();
+
+    applyTheme(localStorage.getItem('theme') === 'dark');
+
+    document.querySelectorAll('.progress-bar[data-progress]').forEach(function (bar) {
+        bar.style.width = bar.getAttribute('data-progress') + '%';
+    });
+
+    document.querySelectorAll('.color-dot[data-color]').forEach(function (dot) {
+        var c = dot.getAttribute('data-color');
+        dot.style.background = c;
+        dot.style.boxShadow = '0 0 8px ' + c;
+    });
+});
+</script>
+{% if session.user_id %}
+<!-- Nexa Chat Widget -->
+<button id="nexaToggleBtn" onclick="toggleNexaChat()" style="
+    position: fixed; bottom: 24px; right: 24px; z-index: 400;
+    width: 56px; height: 56px; border-radius: 50%; border: none; cursor: pointer;
+    background: linear-gradient(135deg, var(--accent-plum), var(--accent-pink));
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.2s ease;"
+    onmouseover="this.style.transform='scale(1.08)'"
+    onmouseout="this.style.transform='scale(1)'">
+    <i data-lucide="sparkles" id="nexaToggleIcon" style="width:24px; height:24px; color:var(--bg-dark);"></i>
+</button>
+
+<div id="nexaChatWindow" style="
+    display: none; position: fixed; bottom: 92px; right: 24px; z-index: 400;
+    width: 340px; max-width: calc(100vw - 32px); height: 460px; max-height: calc(100vh - 140px);
+    background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5); overflow: hidden; flex-direction: column;">
+
+    <div style="display:flex; align-items:center; gap:10px; padding:14px 16px;
+                border-bottom:1px solid var(--border-color); background: rgba(38,31,40,0.6);">
+        <div style="width:32px; height:32px; border-radius:9px;
+                    background: linear-gradient(135deg, var(--accent-plum), var(--accent-pink));
+                    display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <i data-lucide="sparkles" style="width:16px; height:16px; color:var(--bg-dark);"></i>
+        </div>
+        <div style="flex:1;">
+            <div style="font-weight:700; font-size:0.92rem; color:var(--text-primary);">Nexa</div>
+            <div style="font-size:0.72rem; color:var(--text-secondary);">Your study assistant</div>
+        </div>
+        <button onclick="toggleNexaChat()" style="background:transparent; border:none; cursor:pointer; color:var(--text-secondary); padding:4px;">
+            <i data-lucide="x" style="width:18px; height:18px;"></i>
+        </button>
+    </div>
+
+    <div id="nexaMessages" style="flex:1; overflow-y:auto; padding:14px 16px; display:flex; flex-direction:column; gap:10px;">
+        <div style="align-self:flex-start; max-width:85%; background: rgba(38,31,40,0.7);
+                    border:1px solid var(--border-color); border-radius:12px 12px 12px 3px;
+                    padding:9px 12px; font-size:0.85rem; color:var(--text-primary); line-height:1.5;">
+            Hi! I'm Nexa 👋 Ask me anything about your studies, or how to use NeuraNotes.
+        </div>
+    </div>
+
+    <div id="nexaLimitNotice" style="display:none; padding:8px 16px; font-size:0.75rem; color:var(--danger); border-top:1px solid var(--border-color);"></div>
+
+    <form id="nexaForm" onsubmit="sendNexaMessage(event)" style="display:flex; gap:8px; padding:12px; border-top:1px solid var(--border-color);">
+        <input id="nexaInput" type="text" placeholder="Ask Nexa something..." autocomplete="off"
+               style="flex:1; padding:9px 12px; background: rgba(32,26,34,0.8); border:1px solid var(--border-color);
+                      border-radius:8px; color:var(--text-primary); font-size:0.85rem; outline:none; font-family:'Inter',sans-serif;">
+        <button type="submit" id="nexaSendBtn" style="background: var(--accent-plum); border:none; border-radius:8px;
+                width:38px; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;">
+            <i data-lucide="send" style="width:16px; height:16px; color:var(--bg-dark);"></i>
+        </button>
+    </form>
+</div>
+
+<script>
+let nexaOpen = false;
+
+function toggleNexaChat() {
+    const win = document.getElementById('nexaChatWindow');
+    const icon = document.getElementById('nexaToggleIcon');
+    nexaOpen = !nexaOpen;
+    win.style.display = nexaOpen ? 'flex' : 'none';
+    icon.setAttribute('data-lucide', nexaOpen ? 'x' : 'sparkles');
+    if (window.lucide) lucide.createIcons();
+    if (nexaOpen) document.getElementById('nexaInput').focus();
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+function renderNexaText(text) {
+    let safe = escapeHtml(text);
+    safe = safe.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    const lines = safe.split('\n');
+    let html = '';
+    let inList = false;
+    for (const line of lines) {
+        const bullet = line.match(/^\s*-\s+(.*)/);
+        if (bullet) {
+            if (!inList) { html += '<ul style="margin:4px 0 4px 18px; padding:0;">'; inList = true; }
+            html += `<li>${bullet[1]}</li>`;
+        } else {
+            if (inList) { html += '</ul>'; inList = false; }
+            if (line.trim() !== '') html += `<div>${line}</div>`;
+        }
+    }
+    if (inList) html += '</ul>';
+    return html;
+}
+
+function appendNexaMessage(text, fromUser) {
+    const messages = document.getElementById('nexaMessages');
+    const bubble = document.createElement('div');
+    bubble.style.maxWidth = '85%';
+    bubble.style.padding = '9px 12px';
+    bubble.style.fontSize = '0.85rem';
+    bubble.style.lineHeight = '1.5';
+    bubble.style.borderRadius = fromUser ? '12px 12px 3px 12px' : '12px 12px 12px 3px';
+    bubble.style.alignSelf = fromUser ? 'flex-end' : 'flex-start';
+    if (fromUser) {
+        bubble.style.background = 'var(--accent-plum)';
+        bubble.style.color = 'var(--bg-dark)';
+        bubble.textContent = text;
+    } else {
+        bubble.style.background = 'rgba(38,31,40,0.7)';
+        bubble.style.border = '1px solid var(--border-color)';
+        bubble.style.color = 'var(--text-primary)';
+        bubble.innerHTML = renderNexaText(text);
+    }
+    messages.appendChild(bubble);
+    messages.scrollTop = messages.scrollHeight;
+    return bubble;
+}
+
+async function sendNexaMessage(e) {
+    e.preventDefault();
+    const input = document.getElementById('nexaInput');
+    const sendBtn = document.getElementById('nexaSendBtn');
+    const text = input.value.trim();
+    if (!text) return;
+
+    appendNexaMessage(text, true);
+    input.value = '';
+    input.disabled = true;
+    sendBtn.disabled = true;
+
+    const typingBubble = appendNexaMessage('Nexa is typing...', false);
+
+    try {
+        const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text })
+        });
+        const data = await res.json();
+        typingBubble.remove();
+
+        if (!res.ok) {
+            appendNexaMessage(data.error || 'Something went wrong.', false);
+            if (res.status === 429) {
+                document.getElementById('nexaLimitNotice').style.display = 'block';
+                document.getElementById('nexaLimitNotice').textContent = data.error;
+                input.disabled = true;
+                sendBtn.disabled = true;
+                return;
+            }
+        } else {
+            appendNexaMessage(data.reply, false);
+        }
+    } catch (err) {
+        typingBubble.remove();
+        appendNexaMessage('Network error — please try again.', false);
+    }
+
+    input.disabled = false;
+    sendBtn.disabled = false;
+    input.focus();
+}
+</script>
+{% endif %}
+
+</body>
+</html>

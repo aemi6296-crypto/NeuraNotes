@@ -1,0 +1,482 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container">
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h1 class="page-title">🎬 Presentation</h1>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="generateVideo()" id="recordBtn" class="btn btn-danger">
+                🎬 Generate Video
+            </button>
+            <a href="/notes/{{ subject_id }}" class="btn btn-primary">← Back</a>
+        </div>
+    </div>
+
+    <!-- Slide Counter -->
+    <div style="text-align: center; margin-bottom: 15px;">
+        <span style="color: var(--text-secondary);">
+            Slide <span id="currentSlide">1</span> / {{ slides|length }}
+        </span>
+    </div>
+
+    <!-- Presentation Area -->
+    <div id="presentationArea" data-total-slides="{{ slides|length }}"
+         style="position: relative; background: #1a1a2e;
+         border-radius: 16px; overflow: hidden;
+         border: 1px solid var(--border-color);
+         box-shadow: 0 8px 32px rgba(0,0,0,0.5); margin-bottom: 20px;">
+
+        <div id="slidesContainer" style="position: relative; width: 100%; padding-top: 56.25%;">
+            {% for slide in slides %}
+            {% set slide_class = 'slide-wrapper active' if loop.index0 == 0 else 'slide-wrapper' %}
+            <div class="{{ slide_class }}" id="slide-{{ loop.index0 }}"
+                 data-type="{{ slide.type }}"
+                 {% if slide.type == 'image' %}
+                 data-image="/static/uploads/{{ slide.image }}"
+                 {% else %}
+                 data-title="{{ slide.title }}"
+                 data-bullets="{{ slide.bullets|join('|||') }}"
+                 {% endif %}
+                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+                        align-items: center; justify-content: center;">
+                {% if slide.type == 'image' %}
+                <img src="/static/uploads/{{ slide.image }}"
+                     style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                {% else %}
+                <div class="text-slide">
+                    <h2 class="text-slide-title">{{ slide.title }}</h2>
+                    <ul class="text-slide-bullets">
+                        {% for bullet in slide.bullets %}
+                        <li>{{ bullet }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <button onclick="prevSlide()"
+                style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
+                       background: rgba(58,45,61,0.9); border: 1px solid #C8B4C4;
+                       color: white; width: 45px; height: 45px; border-radius: 50%;
+                       font-size: 1.2rem; cursor: pointer; z-index: 10;">‹</button>
+
+        <button onclick="nextSlide()"
+                style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
+                       background: rgba(58,45,61,0.9); border: 1px solid #C8B4C4;
+                       color: white; width: 45px; height: 45px; border-radius: 50%;
+                       font-size: 1.2rem; cursor: pointer; z-index: 10;">›</button>
+
+        <div id="recordingIndicator"
+             style="display: none; position: absolute; top: 15px; right: 15px;
+                    background: rgba(255,0,0,0.8); color: white; padding: 5px 12px;
+                    border-radius: 20px; font-size: 0.85rem; z-index: 20;">
+            🔴 Recording...
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div style="display: flex; justify-content: center; align-items: center;
+                gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+
+        <button onclick="prevSlide()" class="btn btn-primary">◀ Prev</button>
+
+        <button onclick="toggleAutoPlay()" id="autoPlayBtn" class="btn btn-success">
+            ▶ Auto Play
+        </button>
+
+        <button onclick="nextSlide()" class="btn btn-primary">Next ▶</button>
+
+        <div style="display: flex; align-items: center; gap: 8px; color: var(--text-secondary);">
+            <span style="font-size: 0.85rem;">Speed:</span>
+            <select id="speedSelect" onchange="updateSpeed()"
+                    style="background: rgba(38,31,40,0.8);
+                           border: 1px solid var(--border-color);
+                           color: var(--text-primary); padding: 5px 10px; border-radius: 6px;">
+                <option value="2000">2s</option>
+                <option value="3000" selected>3s</option>
+                <option value="5000">5s</option>
+                <option value="8000">8s</option>
+            </select>
+        </div>
+
+        <button onclick="toggleFullscreen()" class="btn btn-primary">⛶ Fullscreen</button>
+    </div>
+
+    <!-- Thumbnails -->
+    <div style="display: flex; gap: 10px; overflow-x: auto; padding: 10px 0;">
+        {% for slide in slides %}
+        {% set thumb_class = 'thumb-item active' if loop.index0 == 0 else 'thumb-item' %}
+        <div onclick="goToSlide(this)"
+             id="thumb-{{ loop.index0 }}"
+             data-index="{{ loop.index0 }}"
+             class="{{ thumb_class }}"
+             style="flex-shrink: 0; width: 120px; height: 80px; cursor: pointer;
+                    border-radius: 8px; overflow: hidden;
+                    transition: all 0.2s; display: flex; align-items: center;
+                    justify-content: center; background: #1a1a2e; padding: 4px;">
+            {% if slide.type == 'image' %}
+            <img src="/static/uploads/{{ slide.image }}"
+                 style="width: 100%; height: 100%; object-fit: cover;">
+            {% else %}
+            <div style="font-size: 0.65rem; color: #C8B4C4; text-align: center;
+                        overflow: hidden; line-height: 1.3;">
+                {{ slide.title[:40] }}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Recording Status -->
+    <div id="recordingStatus"
+         style="display: none; text-align: center; margin-top: 20px; padding: 15px;
+                background: rgba(255,107,138,0.1); border: 1px solid #ff6b8a;
+                border-radius: 8px; color: #ff6b8a;">
+        🎬 Video ban raha hai... (<span id="genProgress">0</span> / <span id="genTotal">0</span>)
+        <button onclick="cancelGeneration()" class="btn btn-danger"
+                style="margin-left: 15px; padding: 6px 15px;">
+            ✕ Cancel
+        </button>
+    </div>
+
+    <!-- Hidden canvas used to render each slide frame for video generation -->
+    <canvas id="videoCanvas" width="1280" height="720" style="display:none;"></canvas>
+
+</div>
+
+<style>
+.slide-wrapper {
+    display: none;
+    transition: opacity 0.4s ease;
+}
+.slide-wrapper.active {
+    display: flex;
+}
+.thumb-item {
+    border: 2px solid #5C4B57;
+}
+.thumb-item.active {
+    border-color: #C8B4C4;
+}
+.text-slide {
+    max-width: 900px;
+    width: 88%;
+    padding: 30px 40px;
+    color: #ffffff;
+}
+.text-slide-title {
+    color: #C8B4C4;
+    font-size: 2.1rem;
+    margin: 0 0 20px 0;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #5C4B57;
+}
+.text-slide-bullets {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.text-slide-bullets li {
+    position: relative;
+    padding-left: 28px;
+    margin-bottom: 14px;
+    font-size: 1.05rem;
+    line-height: 1.55;
+    color: #e8e0e6;
+}
+.text-slide-bullets li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #C8B4C4;
+    font-size: 1.3rem;
+}
+</style>
+
+<script>
+var totalSlides = parseInt(document.getElementById('presentationArea').dataset.totalSlides, 10);
+var currentIndex = 0;
+var autoPlayInterval = null;
+var isAutoPlaying = false;
+var slideSpeed = 3000;
+var mediaRecorder = null;
+var recordedChunks = [];
+var isRecording = false;
+var recordAutoPlay = null;
+var genCancelled = false;
+
+function showSlide(index) {
+    var current = document.getElementById('slide-' + currentIndex);
+    current.style.display = 'none';
+    document.getElementById('thumb-' + currentIndex).style.borderColor = '#5C4B57';
+
+    currentIndex = index;
+
+    var next = document.getElementById('slide-' + currentIndex);
+    next.style.display = 'flex';
+    next.style.opacity = '0';
+    setTimeout(function() { next.style.opacity = '1'; }, 50);
+
+    document.getElementById('thumb-' + currentIndex).style.borderColor = '#C8B4C4';
+    document.getElementById('thumb-' + currentIndex).scrollIntoView({
+        behavior: 'smooth', block: 'nearest', inline: 'center'
+    });
+
+    document.getElementById('currentSlide').textContent = currentIndex + 1;
+}
+
+function nextSlide() {
+    if (currentIndex < totalSlides - 1) {
+        showSlide(currentIndex + 1);
+    } else {
+        showSlide(0);
+    }
+}
+
+function prevSlide() {
+    if (currentIndex > 0) {
+        showSlide(currentIndex - 1);
+    } else {
+        showSlide(totalSlides - 1);
+    }
+}
+
+function goToSlide(index) {
+    showSlide(index);
+}
+
+function toggleAutoPlay() {
+    if (isAutoPlaying) {
+        clearInterval(autoPlayInterval);
+        isAutoPlaying = false;
+        document.getElementById('autoPlayBtn').textContent = '▶ Auto Play';
+        document.getElementById('autoPlayBtn').className = 'btn btn-success';
+    } else {
+        isAutoPlaying = true;
+        document.getElementById('autoPlayBtn').textContent = '⏸ Pause';
+        document.getElementById('autoPlayBtn').className = 'btn btn-danger';
+        autoPlayInterval = setInterval(nextSlide, slideSpeed);
+    }
+}
+
+function updateSpeed() {
+    slideSpeed = parseInt(document.getElementById('speedSelect').value);
+    if (isAutoPlaying) {
+        clearInterval(autoPlayInterval);
+        autoPlayInterval = setInterval(nextSlide, slideSpeed);
+    }
+}
+
+function toggleFullscreen() {
+    var area = document.getElementById('presentationArea');
+    if (!document.fullscreenElement) {
+        area.requestFullscreen();
+    } else {
+        document.exitFullscreen();
+    }
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+    if (e.key === 'ArrowLeft') prevSlide();
+});
+
+// ===== VIDEO GENERATION (canvas-based, no permission prompts) =====
+
+function loadImage(src) {
+    return new Promise(function(resolve, reject) {
+        var img = new Image();
+        img.onload = function() { resolve(img); };
+        img.onerror = reject;
+        img.src = src;
+    });
+}
+
+function wrapCanvasText(ctx, text, maxWidth) {
+    var words = text.split(' ');
+    var lines = [];
+    var current = '';
+    for (var i = 0; i < words.length; i++) {
+        var test = current ? current + ' ' + words[i] : words[i];
+        if (ctx.measureText(test).width > maxWidth && current) {
+            lines.push(current);
+            current = words[i];
+        } else {
+            current = test;
+        }
+    }
+    if (current) lines.push(current);
+    return lines;
+}
+
+function drawImageSlide(ctx, canvas, img) {
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    var scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+    var w = img.width * scale;
+    var h = img.height * scale;
+    var x = (canvas.width - w) / 2;
+    var y = (canvas.height - h) / 2;
+    ctx.drawImage(img, x, y, w, h);
+}
+
+function drawTextSlide(ctx, canvas, data) {
+    var W = canvas.width, H = canvas.height;
+
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(0, 0, W, H);
+
+    var padX = 90;
+    var maxWidth = W - padX * 2;
+    var y = 90;
+
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#C8B4C4';
+    ctx.font = 'bold 46px Arial, sans-serif';
+    var titleLines = wrapCanvasText(ctx, data.title, maxWidth);
+    titleLines.forEach(function(line) {
+        ctx.fillText(line, padX, y);
+        y += 58;
+    });
+
+    y += 20;
+    ctx.strokeStyle = '#5C4B57';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(padX, y);
+    ctx.lineTo(W - padX, y);
+    ctx.stroke();
+    y += 45;
+
+    ctx.font = '27px Arial, sans-serif';
+    for (var i = 0; i < data.bullets.length; i++) {
+        if (y > H - 60) break;
+        var bulletLines = wrapCanvasText(ctx, data.bullets[i], maxWidth - 35);
+        ctx.fillStyle = '#C8B4C4';
+        ctx.fillText('•', padX, y);
+        ctx.fillStyle = '#ffffff';
+        for (var j = 0; j < bulletLines.length; j++) {
+            ctx.fillText(bulletLines[j], padX + 32, y);
+            y += 38;
+        }
+        y += 12;
+    }
+}
+
+function drawSlide(ctx, canvas, data) {
+    if (data.type === 'image') {
+        drawImageSlide(ctx, canvas, data.img);
+    } else {
+        drawTextSlide(ctx, canvas, data);
+    }
+}
+
+async function generateVideo() {
+    if (isRecording) return;
+
+    var wrappers = Array.prototype.slice.call(
+        document.querySelectorAll('#slidesContainer .slide-wrapper')
+    );
+    if (!wrappers.length) {
+        alert('Koi slide nahi mili video banane ke liye.');
+        return;
+    }
+
+    var canvas = document.getElementById('videoCanvas');
+    var ctx = canvas.getContext('2d');
+    var recordBtn = document.getElementById('recordBtn');
+    recordBtn.disabled = true;
+    genCancelled = false;
+
+    var slidesData;
+    try {
+        slidesData = await Promise.all(wrappers.map(function(w) {
+            if (w.dataset.type === 'image') {
+                return loadImage(w.dataset.image).then(function(img) {
+                    return { type: 'image', img: img };
+                });
+            } else {
+                var bullets = w.dataset.bullets
+                    ? w.dataset.bullets.split('|||').filter(Boolean)
+                    : [];
+                return Promise.resolve({
+                    type: 'text',
+                    title: w.dataset.title || '',
+                    bullets: bullets
+                });
+            }
+        }));
+    } catch (err) {
+        alert('Slides load karne mein masla aya.');
+        recordBtn.disabled = false;
+        return;
+    }
+
+    drawSlide(ctx, canvas, slidesData[0]);
+
+    var stream = canvas.captureStream(30);
+    mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+    recordedChunks = [];
+
+    mediaRecorder.ondataavailable = function(e) {
+        if (e.data.size > 0) recordedChunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = function() {
+        stream.getTracks().forEach(function(track) { track.stop(); });
+        isRecording = false;
+        document.getElementById('recordingIndicator').style.display = 'none';
+        document.getElementById('recordingStatus').style.display = 'none';
+        recordBtn.textContent = '🎬 Generate Video';
+        recordBtn.disabled = false;
+
+        if (!genCancelled && recordedChunks.length) {
+            var blob = new Blob(recordedChunks, { type: 'video/webm' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'presentation.webm';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    };
+
+    isRecording = true;
+    document.getElementById('recordingIndicator').style.display = 'block';
+    document.getElementById('recordingStatus').style.display = 'block';
+    document.getElementById('genTotal').textContent = slidesData.length;
+    document.getElementById('genProgress').textContent = 1;
+    recordBtn.textContent = '⏳ Generating...';
+
+    mediaRecorder.start();
+    goToSlide(0);
+
+    var idx = 0;
+    recordAutoPlay = setInterval(function() {
+        idx++;
+        if (genCancelled || idx >= slidesData.length) {
+            clearInterval(recordAutoPlay);
+            mediaRecorder.stop();
+            return;
+        }
+        drawSlide(ctx, canvas, slidesData[idx]);
+        goToSlide(idx);
+        document.getElementById('genProgress').textContent = idx + 1;
+    }, slideSpeed);
+}
+
+function cancelGeneration() {
+    if (isRecording) {
+        genCancelled = true;
+        clearInterval(recordAutoPlay);
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+        }
+    }
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,271 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container">
+
+    <div class="page-header-row">
+        <div>
+            <h1 class="page-title">
+                <i data-lucide="bar-chart-3"></i>
+                Study Analytics
+            </h1>
+            <p class="page-subtitle">Track your study time and progress at a glance</p>
+        </div>
+        <div class="header-deco-icon">
+            <i data-lucide="line-chart"></i>
+        </div>
+    </div>
+
+    {% if study_data %}
+
+    <!-- Total Stats -->
+    <div class="stats-grid-4">
+        <div class="stat-card-v2">
+            <div class="stat-card-top">
+                <div class="stat-icon-badge"><i data-lucide="clock"></i></div>
+            </div>
+            <div class="stat-number-v2">{{ study_data | sum(attribute='total_minutes') }}</div>
+            <div class="stat-label-v2">Total Minutes Studied</div>
+        </div>
+        <div class="stat-card-v2">
+            <div class="stat-card-top">
+                <div class="stat-icon-badge"><i data-lucide="hourglass"></i></div>
+            </div>
+            <div class="stat-number-v2">{{ (study_data | sum(attribute='total_minutes') / 60) | round(1) }}</div>
+            <div class="stat-label-v2">Total Hours</div>
+        </div>
+        <div class="stat-card-v2">
+            <div class="stat-card-top">
+                <div class="stat-icon-badge"><i data-lucide="book-open"></i></div>
+            </div>
+            <div class="stat-number-v2">{{ study_data | length }}</div>
+            <div class="stat-label-v2">Total Subjects</div>
+        </div>
+    </div>
+
+    <!-- Bar Chart -->
+    <div class="card" style="margin-bottom: 20px;">
+        <div class="card-header-flex">
+            <div class="card-icon-badge"><i data-lucide="trending-up"></i></div>
+            <div>
+                <h2 class="card-title-main">Study Time Per Subject</h2>
+                <p class="card-subtitle">Minutes spent on each subject</p>
+            </div>
+        </div>
+        <canvas id="studyBarChart" style="max-height: 350px;"></canvas>
+    </div>
+
+    <!-- Pie Chart -->
+    <div class="card" style="margin-bottom: 20px;">
+        <div class="card-header-flex">
+            <div class="card-icon-badge"><i data-lucide="pie-chart"></i></div>
+            <div>
+                <h2 class="card-title-main">Study Distribution</h2>
+                <p class="card-subtitle">How your study time is split across subjects</p>
+            </div>
+        </div>
+        <div style="max-width: 400px; margin: 0 auto;">
+            <canvas id="studyPieChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Progress Overview -->
+    <div class="card" style="margin-bottom: 20px;">
+        <div class="card-header-flex">
+            <div class="card-icon-badge"><i data-lucide="target"></i></div>
+            <div>
+                <h2 class="card-title-main">Topics Progress Per Subject</h2>
+                <p class="card-subtitle">How far along each subject is</p>
+            </div>
+        </div>
+        {% for item in study_data %}
+        <div style="margin-bottom: 18px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                <span style="color: var(--text-primary); display:flex; align-items:center;">
+                    <span class="progress-dot" data-color="{{ item.color }}"></span>
+                    {{ item.name }}
+                </span>
+                <span style="color: var(--text-secondary); font-size: 0.9rem;">
+                    {{ item.completed_topics }}/{{ item.total_topics }} ({{ item.progress }}%)
+                </span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar" data-progress="{{ item.progress }}"></div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Subject Table -->
+    <div class="card">
+        <div class="card-header-flex">
+            <div class="card-icon-badge"><i data-lucide="clipboard-list"></i></div>
+            <div>
+                <h2 class="card-title-main">Detailed Breakdown</h2>
+                <p class="card-subtitle">Full stats for every subject</p>
+            </div>
+        </div>
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <th style="padding: 12px; text-align: left; color: var(--text-secondary);">Subject</th>
+                        <th style="padding: 12px; text-align: right; color: var(--text-secondary);">Minutes</th>
+                        <th style="padding: 12px; text-align: right; color: var(--text-secondary);">Hours</th>
+                        <th style="padding: 12px; text-align: right; color: var(--text-secondary);">Progress</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in study_data %}
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 12px; color: var(--text-primary); display:flex; align-items:center;">
+                            <span class="progress-dot" data-color="{{ item.color }}"></span>
+                            {{ item.name }}
+                        </td>
+                        <td style="padding: 12px; text-align: right; color: var(--accent-light);">
+                            {{ item.total_minutes }}
+                        </td>
+                        <td style="padding: 12px; text-align: right; color: var(--accent-pink);">
+                            {{ (item.total_minutes / 60) | round(1) }}
+                        </td>
+                        <td style="padding: 12px; text-align: right; color: var(--text-primary);">
+                            {{ item.completed_topics }}/{{ item.total_topics }} ({{ item.progress }}%)
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="card empty-state">
+        <i data-lucide="bar-chart-3"></i>
+        <p style="font-size: 1.05rem; margin-bottom: 6px;">No study data yet</p>
+        <p style="font-size: 0.85rem; opacity: 0.8;">Start a Pomodoro session to track your study time.</p>
+        <a href="/" class="btn btn-primary" style="margin-top: 18px;">Go to Dashboard</a>
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- Chart data passed as JSON, not inline JS, to keep this a valid script for editors/linters -->
+<script id="chart-data" type="application/json">
+{{ study_data | tojson }}
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    // Set progress bar widths and colored dots from data attributes
+    document.querySelectorAll('.progress-bar[data-progress]').forEach(function (bar) {
+        bar.style.width = bar.getAttribute('data-progress') + '%';
+    });
+    document.querySelectorAll('.progress-dot[data-color]').forEach(function (dot) {
+        dot.style.display = 'inline-block';
+        dot.style.width = '10px';
+        dot.style.height = '10px';
+        dot.style.borderRadius = '50%';
+        dot.style.marginRight = '6px';
+        dot.style.background = dot.getAttribute('data-color');
+    });
+
+    var dataEl = document.getElementById('chart-data');
+    if (!dataEl) {
+        return;
+    }
+
+    var studyData = JSON.parse(dataEl.textContent);
+    if (!studyData || studyData.length === 0) {
+        return;
+    }
+
+    var labels = studyData.map(function (item) { return item.name; });
+    var minutes = studyData.map(function (item) { return item.total_minutes; });
+    var colors = studyData.map(function (item) { return item.color; });
+
+    var gridColor = getComputedStyle(document.body).getPropertyValue('--border-color').trim();
+    var textColor = getComputedStyle(document.body).getPropertyValue('--text-secondary').trim();
+
+    // Bar Chart
+    var barCanvas = document.getElementById('studyBarChart');
+    if (barCanvas) {
+        var barCtx = barCanvas.getContext('2d');
+        new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Minutes Studied',
+                    data: minutes,
+                    backgroundColor: colors.map(function (c) { return c + 'aa'; }),
+                    borderColor: colors,
+                    borderWidth: 2,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function (ctx) {
+                                return ' ' + ctx.parsed.y + ' mins (' + (ctx.parsed.y / 60).toFixed(1) + ' hrs)';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: textColor },
+                        grid: { color: gridColor }
+                    },
+                    y: {
+                        ticks: { color: textColor },
+                        grid: { color: gridColor }
+                    }
+                }
+            }
+        });
+    }
+
+    // Pie Chart
+    var pieCanvas = document.getElementById('studyPieChart');
+    if (pieCanvas) {
+        var pieCtx = pieCanvas.getContext('2d');
+        new Chart(pieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: minutes,
+                    backgroundColor: colors.map(function (c) { return c + 'cc'; }),
+                    borderColor: colors,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: textColor, padding: 15 }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (ctx) {
+                                return ' ' + ctx.label + ': ' + ctx.parsed + ' mins';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+});
+</script>
+
+{% endblock %}

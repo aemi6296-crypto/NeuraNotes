@@ -1,0 +1,232 @@
+{% extends "layout.html" %}
+
+{% block content %}
+{% set total_topics = subjects|sum(attribute='total_topics') %}
+{% set completed_topics = subjects|sum(attribute='completed_topics') %}
+{% set overall_progress = (completed_topics / total_topics * 100)|int if total_topics > 0 else 0 %}
+
+<div class="container">
+
+    <div class="dash-topbar fade-in-up">
+        <div style="display:flex; align-items:center; gap:16px;">
+            <div class="dashboard-avatar">{{ (display_name[0]|upper) if display_name else 'U' }}</div>
+            <div>
+                <h1 class="page-title" style="margin-bottom:2px;">Hello, {{ display_name }}!</h1>
+                <p class="page-subtitle">Ready to continue your learning?</p>
+            </div>
+        </div>
+        <div class="dash-topbar-icons">
+            <button class="icon-circle-btn" onclick="toggleTheme()"><i data-lucide="moon" id="themeIcon"></i></button>
+        </div>
+    </div>
+
+    <div class="stats-grid-4">
+        <div class="stat-card-v2 fade-in-up" data-delay="0.05">
+            <div class="stat-card-top">
+                <div class="stat-icon-badge"><i data-lucide="book-open"></i></div>
+                <i data-lucide="arrow-right" class="stat-arrow"></i>
+            </div>
+            <div class="stat-number-v2" data-count="{{ subjects|length }}">0</div>
+            <div class="stat-label-v2">Subjects</div>
+            <div class="stat-sub-text">{{ overall_progress }}% completed</div>
+        </div>
+
+        <div class="stat-card-v2 fade-in-up" data-delay="0.1">
+            <div class="stat-card-top">
+                <div class="stat-icon-badge"><i data-lucide="file-text"></i></div>
+                <i data-lucide="arrow-right" class="stat-arrow"></i>
+            </div>
+            <div class="stat-number-v2"><span data-count="{{ completed_topics }}">0</span> / {{ total_topics }}</div>
+            <div class="stat-label-v2">Topics Completed</div>
+            <div class="stat-sub-text">Keep going!</div>
+        </div>
+
+        <div class="stat-card-v2 fade-in-up" data-delay="0.15">
+            <div class="stat-card-top">
+                <div class="stat-icon-badge"><i data-lucide="target"></i></div>
+                <i data-lucide="arrow-right" class="stat-arrow"></i>
+            </div>
+            <div class="stat-number-v2" data-count="{{ goals|length }}">0</div>
+            <div class="stat-label-v2">Active Goals</div>
+            <div class="stat-sub-text">Set your goals</div>
+        </div>
+
+        <div class="stat-card-v2 fade-in-up" data-delay="0.2">
+            <div class="stat-card-top">
+                <div class="stat-icon-badge"><i data-lucide="bar-chart-2"></i></div>
+                <i data-lucide="arrow-right" class="stat-arrow"></i>
+            </div>
+            <div class="stat-number-v2">{{ overall_progress }}%</div>
+            <div class="stat-label-v2">Study Progress</div>
+            <div class="stat-sub-text">You're on your way!</div>
+        </div>
+    </div>
+
+    <div class="section-header-row">
+        <h2 class="section-title-sm"><i data-lucide="zap" class="icon-inline"></i> Continue Learning</h2>
+        <a href="/subjects" class="view-all-link">View All <i data-lucide="arrow-right"></i></a>
+    </div>
+
+    <div class="continue-grid">
+        {% set ns = namespace(shown=0) %}
+        {% for subject in subjects %}
+            {% if subject.total_topics > 0 %}
+                {% set progress = (subject.completed_topics / subject.total_topics * 100)|int %}
+            {% else %}
+                {% set progress = 0 %}
+            {% endif %}
+            {% if progress > 0 and progress < 100 and ns.shown < 2 %}
+            <div class="continue-card fade-in-up" data-delay="{{ 0.1 + ns.shown * 0.07 }}">
+                <div class="continue-card-top">
+                    <div class="continue-icon" data-color="{{ subject.color }}">
+                        <i data-lucide="book-open"></i>
+                    </div>
+                    <div class="continue-info">
+                        <h4>{{ subject.name }}</h4>
+                        <p>{{ subject.completed_topics }}/{{ subject.total_topics }} topics</p>
+                    </div>
+                    <span class="continue-percent">{{ progress }}%</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" data-progress="{{ progress }}"></div>
+                </div>
+                <a href="/notes/{{ subject.id }}" class="btn-continue">Continue <i data-lucide="arrow-right"></i></a>
+            </div>
+            {% set ns.shown = ns.shown + 1 %}
+            {% endif %}
+        {% endfor %}
+        {% if ns.shown == 0 %}
+        <p class="no-continue-text">Nothing in progress yet — start a subject to see it here!</p>
+        {% endif %}
+    </div>
+
+    <div class="section-header-row">
+        <h2 class="section-title-sm"><i data-lucide="book-open" class="icon-inline"></i> Your Subjects</h2>
+        <a href="/subjects" class="add-pill-btn">+ Add Subject</a>
+    </div>
+
+    {% if subjects %}
+    <div class="subjects-grid">
+        {% for subject in subjects %}
+        <div class="subject-card-wrapper fade-in-up" data-delay="{{ 0.05 + loop.index0 * 0.07 }}">
+            <div class="subject-card-menu">
+                <button class="three-dots-btn" onclick="toggleMenu(event, 'menu-{{ subject.id }}')">
+                    <i data-lucide="more-vertical"></i>
+                </button>
+                <div class="dropdown-menu" id="menu-{{ subject.id }}">
+                    <a href="/subject/delete/{{ subject.id }}"
+                      onclick="event.preventDefault(); showConfirm('Delete {{ subject.name }}? All notes and flashcards will be deleted!', function(){ window.location='/subject/delete/{{ subject.id }}'; })"
+                       class="dropdown-item danger">
+                        <i data-lucide="trash-2" class="icon-inline"></i> Delete
+                    </a>
+                </div>
+            </div>
+            <a href="/notes/{{ subject.id }}" class="subject-card">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3>{{ subject.name }}</h3>
+                    <div class="color-dot" data-color="{{ subject.color }}"></div>
+                </div>
+
+                {% if subject.total_topics > 0 %}
+                {% set progress = (subject.completed_topics / subject.total_topics * 100)|int %}
+                {% else %}
+                {% set progress = 0 %}
+                {% endif %}
+
+                <div class="progress-bar-container">
+                    <div class="progress-bar" data-progress="{{ progress }}"></div>
+                </div>
+                <p class="progress-text">{{ subject.completed_topics }}/{{ subject.total_topics }} topics completed ({{ progress }}%)</p>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 10px;">Click to view notes →</p>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card empty-state fade-in-up">
+        <i data-lucide="book-open"></i>
+        <p style="font-size: 1.05rem; margin-bottom: 6px;">No subjects yet</p>
+        <p style="font-size: 0.85rem; opacity: 0.8;">Add your first subject to start organizing your notes.</p>
+        <a href="/subjects" class="btn btn-primary" style="margin-top: 18px;">+ Add Your First Subject</a>
+    </div>
+    {% endif %}
+
+    <div class="section-header-row">
+        <h2 class="section-title-sm"><i data-lucide="sparkles" class="icon-inline"></i> Quick Actions</h2>
+    </div>
+
+    <div class="quick-actions-grid">
+        <a href="/subjects" class="quick-action-btn"><i data-lucide="book-open"></i> Add Subject</a>
+        <a href="/goals" class="quick-action-btn"><i data-lucide="target"></i> Add Goal</a>
+        <a href="/flashcards" class="quick-action-btn"><i data-lucide="layers"></i> Create Flashcard</a>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin: 30px 0 20px;">
+        <h2 style="color: var(--text-primary); display:flex; align-items:center; gap:8px;">
+            <i data-lucide="target" class="icon-inline"></i> Active Goals
+        </h2>
+        <a href="/goals" class="btn btn-primary">+ Add Goal</a>
+    </div>
+
+    {% if goals %}
+    {% for goal in goals %}
+    <div class="goal-item fade-in-up" data-delay="{{ 0.05 + loop.index0 * 0.07 }}">
+        <div>
+            <div class="goal-title">{{ goal.title }}</div>
+            <div class="goal-deadline">
+                <i data-lucide="target" class="icon-inline"></i> Target: {{ goal.target_hours }} hours
+                {% if goal.deadline %}| <i data-lucide="clock" class="icon-inline"></i> Deadline: {{ goal.deadline }}{% endif %}
+            </div>
+        </div>
+        <a href="/goal/complete/{{ goal.id }}" class="btn btn-success">
+            <i data-lucide="check" style="width:16px; height:16px;"></i> Done
+        </a>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="card empty-state fade-in-up">
+        <i data-lucide="target"></i>
+        <p style="font-size: 1.05rem; margin-bottom: 6px;">No active goals</p>
+        <p style="font-size: 0.85rem; opacity: 0.8;">Set a goal to stay on track with your studying.</p>
+        <a href="/goals" class="btn btn-primary" style="margin-top: 18px;">Set a Goal</a>
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+function animateCountUp(el, target, duration) {
+    duration = duration || 900;
+    var startTime = null;
+    function step(timestamp) {
+        if (!startTime) startTime = timestamp;
+        var progress = Math.min((timestamp - startTime) / duration, 1);
+        var eased = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.floor(eased * target);
+        if (progress < 1) {
+            requestAnimationFrame(step);
+        } else {
+            el.textContent = target;
+        }
+    }
+    requestAnimationFrame(step);
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[data-count]').forEach(function (el) {
+        var target = parseInt(el.getAttribute('data-count'), 10) || 0;
+        animateCountUp(el, target);
+    });
+
+    document.querySelectorAll('.fade-in-up[data-delay]').forEach(function (el) {
+        el.style.animationDelay = el.getAttribute('data-delay') + 's';
+    });
+
+    document.querySelectorAll('.continue-icon[data-color]').forEach(function (el) {
+        var c = el.getAttribute('data-color');
+        el.style.background = c + '22';
+        el.style.color = c;
+    });
+});
+</script>
+{% endblock %}

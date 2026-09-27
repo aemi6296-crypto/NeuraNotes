@@ -1,0 +1,14 @@
+﻿.env
+__pycache__/
+*.pyc
+*.pyo
+neuranotes-env/
+venv/
+.venv/
+neuranotes.db
+instance/
+flask_session/
+static/uploads/*
+.DS_Store
+Thumbs.db
+.vscode/

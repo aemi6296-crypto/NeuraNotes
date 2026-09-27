@@ -1,0 +1,732 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<style>
+.pomodoro-circle-container {
+    width: 260px !important;
+    height: 260px !important;
+    margin: 0 auto;
+}
+.pomodoro-svg {
+    width: 100% !important;
+    height: 100% !important;
+}
+.pomo-time {
+    font-size: 2.3rem !important;
+    letter-spacing: 1px;
+}
+.search-box-wrapper {
+    position: relative;
+    flex: 1;
+}
+.search-box-wrapper .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 17px;
+    height: 17px;
+    color: var(--text-secondary);
+    pointer-events: none;
+}
+.search-box-wrapper input {
+    padding-left: 40px !important;
+}
+</style>
+<div class="container">
+
+    <div class="page-header-row">
+        <div>
+            <h1 class="page-title">
+                <i data-lucide="file-text"></i>
+                {{ subject.name }}
+            </h1>
+            <p class="page-subtitle">Focus, take notes and track this subject's progress</p>
+        </div>
+        <a href="/" class="btn btn-primary">← Back</a>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="card" style="margin-bottom: 20px;">
+        <form method="GET" action="/notes/{{ subject.id }}">
+            <div style="display: flex; gap: 10px;">
+                <div class="search-box-wrapper">
+                    <i data-lucide="search" class="search-icon"></i>
+                    <input type="text" name="search" value="{{ search }}"
+                           placeholder="Search notes by title..."
+                           style="width:100%; padding: 12px 15px;
+                                  background: var(--bg-secondary);
+                                  border: 1px solid var(--border-color);
+                                  border-radius: 8px; color: var(--text-primary);
+                                  font-size: 0.95rem; outline: none;">
+                </div>
+                <button type="submit" class="btn btn-primary">Search</button>
+                {% if search %}
+                <a href="/notes/{{ subject.id }}" class="btn btn-danger">Clear</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Pomodoro Timer -->
+    <div class="card pomodoro-card" style="margin-bottom: 20px;">
+        <div style="text-align:center;">
+            <span class="pomo-header-badge"><i data-lucide="sparkles"></i> Stay Focused</span>
+        </div>
+        <h2 class="pomo-main-title">Pomodoro <span>Timer</span></h2>
+        <p class="pomo-main-subtitle">Small steps. Big progress.</p>
+
+        <div class="pomodoro-modes">
+            <button onclick="setMode('focus')" id="btn-focus" class="pomo-mode-btn active">
+                <i data-lucide="target" class="icon-inline"></i> Focus 60m
+            </button>
+            <button onclick="setMode('short')" id="btn-short" class="pomo-mode-btn">
+                <i data-lucide="coffee" class="icon-inline"></i> Short Break 5m
+            </button>
+            <button onclick="setMode('long')" id="btn-long" class="pomo-mode-btn">
+                <i data-lucide="leaf" class="icon-inline"></i> Long Break 15m
+            </button>
+        </div>
+
+        <div class="pomo-grid-layout">
+
+            <!-- Left: Current Session -->
+            <div class="pomo-side-card">
+                <div class="pomo-side-title"><i data-lucide="target"></i> Current Session</div>
+                <div class="pomo-side-label" id="pomoLabelSide">Focus Time</div>
+                <div class="pomo-side-value" id="pomoTimeSide">60:00</div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="pomoSideBar" data-progress="100"></div>
+                </div>
+                <div class="pomo-side-tip"><i data-lucide="sparkle"></i> Stay focused, you got this!</div>
+            </div>
+
+            <!-- Center: Circular Timer -->
+            <div class="pomo-center-col">
+                <div class="pomodoro-circle-container">
+                    <svg class="pomodoro-svg" viewBox="0 0 200 200">
+                        <circle class="pomo-track" cx="100" cy="100" r="85"/>
+                        <circle class="pomo-progress" id="pomoProgress" cx="100" cy="100" r="85"
+                                stroke-dasharray="534" stroke-dashoffset="0"/>
+                    </svg>
+                    <div class="pomodoro-time-display">
+                        <i data-lucide="brain" class="pomo-brain-icon" style="width:26px; height:26px; display:block; margin:0 auto 6px;"></i>
+                        <div id="pomoTime" class="pomo-time">60:00</div>
+                        <div id="pomoLabel" class="pomo-label">FOCUS TIME</div>
+                    </div>
+                </div>
+
+                <div class="pomodoro-controls" style="margin-top: 20px;">
+                    <button onclick="startTimer()" id="startBtn" class="btn-pomo-start" style="display:flex; align-items:center; gap:8px;">
+                        <i data-lucide="play" id="startBtnIcon" style="width:16px; height:16px;"></i>
+                        <span id="startBtnText">START</span>
+                    </button>
+                    <button onclick="resetTimer()" class="btn-pomo-reset">
+                        <i data-lucide="rotate-ccw" style="width:18px; height:18px;"></i>
+                    </button>
+                </div>
+
+                <div class="pomodoro-stats" style="margin-top: 20px;">
+                    <div class="pomo-stat">
+                        <div id="sessionCount">0</div>
+                        <div>Sessions</div>
+                    </div>
+                    <div class="pomo-stat">
+                        <div id="streakCount">0</div>
+                        <div>Streak Days</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Today's Progress -->
+            <div class="pomo-side-card">
+                <div class="pomo-side-title"><i data-lucide="bar-chart-2"></i> Today's Progress</div>
+                <div class="pomo-stat-row">
+                    <div class="pomo-stat-block">
+                        <div class="pomo-stat-block-label"><i data-lucide="layers"></i> Sessions</div>
+                        <div class="pomo-stat-block-value"><span id="sessionCountSide">0</span> / 4</div>
+                    </div>
+                    <div class="pomo-stat-block">
+                        <div class="pomo-stat-block-label"><i data-lucide="flame"></i> Streak</div>
+                        <div class="pomo-stat-block-value"><span id="streakCountSide">0</span> days</div>
+                    </div>
+                </div>
+                <div class="pomo-side-tip"><i data-lucide="sparkle"></i> Discipline is the bridge between goals and success.</div>
+            </div>
+
+        </div>
+
+        <form method="POST" action="/study" id="studyLogForm" style="display:none;">
+            <input type="hidden" name="subject_id" value="{{ subject.id }}">
+            <input type="hidden" name="duration" id="studyDuration" value="60">
+        </form>
+    </div>
+
+    <!-- Progress Update -->
+    <div class="card" style="margin-bottom: 20px;">
+        <div class="card-header-flex">
+            <div class="card-icon-badge"><i data-lucide="bar-chart-3"></i></div>
+            <div>
+                <h2 class="card-title-main">Update Progress</h2>
+                <p class="card-subtitle">Mark how many topics you've completed</p>
+            </div>
+        </div>
+        <form method="POST" action="/update_progress/{{ subject.id }}">
+            <div style="display: flex; gap: 15px; align-items: flex-end;">
+                <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                    <label>Completed Topics</label>
+                    <input type="number" name="completed_topics"
+                           value="{{ subject.completed_topics }}"
+                           min="0" max="{{ subject.total_topics }}">
+                </div>
+                <button type="submit" class="btn btn-success">Update</button>
+            </div>
+        </form>
+        {% if subject.total_topics > 0 %}
+        {% set progress = (subject.completed_topics / subject.total_topics * 100)|int %}
+        {% else %}
+        {% set progress = 0 %}
+        {% endif %}
+        <div class="progress-bar-container" style="margin-top: 15px;">
+            <div class="progress-bar" data-progress="{{ progress }}"></div>
+        </div>
+        <p class="progress-text">{{ subject.completed_topics }}/{{ subject.total_topics }} topics ({{ progress }}%)</p>
+    </div>
+
+    <!-- Add Note Button -->
+    <div style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px;">
+        <button onclick="openEditor()" class="btn btn-primary" style="width: 100%; padding: 15px; font-size: 1rem;">
+            <i data-lucide="pencil" style="width:16px; height:16px;"></i> Write New Note
+        </button>
+        <a href="/pdf_presentation/{{ subject.id }}"
+           class="btn btn-primary"
+           style="width: 100%; padding: 15px; font-size: 1rem; text-align: center; display: flex; align-items:center; justify-content:center; gap:8px;">
+            <i data-lucide="clapperboard" style="width:16px; height:16px;"></i> PDF to Presentation &amp; Video
+        </a>
+    </div>
+
+    <!-- Rich Note Editor -->
+    <div id="noteEditorOverlay" style="display: none;">
+        <div class="note-editor-page">
+            <div class="editor-topbar">
+                <input type="text" id="editorTitle" placeholder="Note Title..."
+                       class="editor-title-input">
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="saveNote()" class="btn btn-success">
+                        <i data-lucide="save" style="width:16px; height:16px;"></i> Save
+                    </button>
+                    <button onclick="closeEditor()" class="btn btn-danger">
+                        <i data-lucide="x" style="width:16px; height:16px;"></i> Close
+                    </button>
+                </div>
+            </div>
+
+            <!-- Formatting Toolbar -->
+            <div class="editor-toolbar">
+                <button onclick="format('bold')" class="fmt-btn" title="Bold"><b>B</b></button>
+                <button onclick="format('italic')" class="fmt-btn" title="Italic"><i>I</i></button>
+                <button onclick="format('underline')" class="fmt-btn" title="Underline"><u>U</u></button>
+                <div class="toolbar-divider"></div>
+                <button onclick="formatBlock('h1')" class="fmt-btn" title="Heading 1">H1</button>
+                <button onclick="formatBlock('h2')" class="fmt-btn" title="Heading 2">H2</button>
+                <button onclick="formatBlock('h3')" class="fmt-btn" title="Heading 3">H3</button>
+                <div class="toolbar-divider"></div>
+                <button onclick="format('insertUnorderedList')" class="fmt-btn" title="Bullet List">• List</button>
+                <button onclick="format('insertOrderedList')" class="fmt-btn" title="Numbered List">1. List</button>
+                <div class="toolbar-divider"></div>
+                <div class="highlight-btns">
+                    <span style="font-size: 0.8rem; color: var(--text-secondary);">Highlight:</span>
+                    <button onclick="highlight('#978090')" class="hl-btn" style="background:#978090;" title="Plum"></button>
+                    <button onclick="highlight('#C8B4C4')" class="hl-btn" style="background:#C8B4C4;" title="Pink"></button>
+                    <button onclick="highlight('#a8e6cf')" class="hl-btn" style="background:#a8e6cf;" title="Green"></button>
+                    <button onclick="highlight('#ffd700')" class="hl-btn" style="background:#ffd700;" title="Yellow"></button>
+                    <button onclick="highlight('#ff6b8a')" class="hl-btn" style="background:#ff6b8a;" title="Red"></button>
+                    <button onclick="removeHighlight()" class="hl-btn"
+                            style="background: transparent; border: 1px solid var(--border-color);
+                                   font-size: 0.7rem; color: var(--text-secondary);
+                                   width: auto; padding: 0 6px;" title="Remove">✕</button>
+                </div>
+                <div class="toolbar-divider"></div>
+                <label class="fmt-btn" style="cursor: pointer; display:flex; align-items:center; gap:4px;" title="Add Image">
+                    <i data-lucide="image" style="width:14px; height:14px;"></i>
+                    <input type="file" id="editorImageInput" accept="image/*"
+                           style="display:none;" onchange="insertImage(this)">
+                </label>
+            </div>
+
+            <!-- Editor Area -->
+            <div id="noteEditor" class="editor-area" contenteditable="true"
+                 placeholder="Start writing your notes here...">
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden form for saving -->
+    <form method="POST" action="/notes/{{ subject.id }}" id="saveNoteForm"
+          enctype="multipart/form-data" style="display:none;">
+        <input type="hidden" name="title" id="formTitle">
+        <input type="hidden" name="content" id="formContent">
+        <input type="hidden" name="is_rich" value="1">
+    </form>
+
+    <!-- Notes List -->
+    <div class="section-header-row">
+        <h2 class="section-title">
+            <i data-lucide="clipboard-list" class="icon-inline"></i> Saved Notes
+            {% if search %}<span style="color: var(--accent-plum); font-size: 1rem;"> — "{{ search }}"</span>{% endif %}
+        </h2>
+        <span class="total-badge">{{ notes|length }} Notes</span>
+    </div>
+
+    {% if notes %}
+        {% for note in notes %}
+<div class="note-list-item" onclick="window.location.href='/note/{{ note.id }}'" style="cursor: pointer;">
+    <div class="note-list-title">
+        <i data-lucide="file-text"></i>
+        <span>{{ note.title }}</span>
+        <span class="note-list-date">{{ note.created_at[:10] }}</span>
+    </div>
+    <div class="note-list-actions">
+        <a href="/note/export/{{ note.id }}" class="btn btn-primary btn-sm" onclick="event.stopPropagation()">
+            <i data-lucide="download" style="width:14px; height:14px;"></i> PDF
+        </a>
+        <a href="/note/delete/{{ note.id }}"
+           class="btn btn-danger btn-sm"
+           onclick="event.stopPropagation(); return confirm('Delete this note?')">
+            <i data-lucide="trash-2" style="width:14px; height:14px;"></i>
+        </a>
+    </div>
+</div>
+{% endfor %}
+    {% else %}
+    <div class="card empty-state">
+        <i data-lucide="file-text"></i>
+        <p style="font-size: 1.05rem; margin-bottom: 6px;">
+            {% if search %}No notes found for "{{ search }}"{% else %}No notes yet{% endif %}
+        </p>
+        <p style="font-size: 0.85rem; opacity: 0.8;">
+            {% if not search %}Write your first note above to get started.{% endif %}
+        </p>
+    </div>
+    {% endif %}
+
+</div>
+
+
+<script>
+
+// Set progress bar width from data attribute (avoids Jinja-in-CSS parser errors)
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.progress-bar[data-progress]').forEach(function(bar) {
+        bar.style.width = bar.getAttribute('data-progress') + '%';
+    });
+});
+
+let timeLeft = 60 * 60;
+let totalTime = 60 * 60;
+let timerInterval = null;
+let isRunning = false;
+let sessions = 0;
+let currentMode = 'focus';
+let focusStartTime = null; // Date.now() timestamp jab focus timer chalu hua
+
+const modes = {
+    focus: { time: 60 * 60, label: 'FOCUS TIME' },
+    short: { time: 5 * 60, label: 'SHORT BREAK' },
+    long: { time: 15 * 60, label: 'LONG BREAK' }
+};
+
+const sideLabels = {
+    focus: 'Focus Time',
+    short: 'Short Break',
+    long: 'Long Break'
+};
+
+function setStartBtn(playing) {
+    const icon = document.getElementById('startBtnIcon');
+    const text = document.getElementById('startBtnText');
+    if (playing) {
+        icon.setAttribute('data-lucide', 'pause');
+        text.textContent = 'PAUSE';
+    } else {
+        icon.setAttribute('data-lucide', 'play');
+        text.textContent = 'START';
+    }
+    if (window.lucide) lucide.createIcons();
+}
+
+// Actual chala hua focus time record karta hai (partial bhi), page reload kiye bina
+function logFocusTime() {
+    if (currentMode !== 'focus' || !focusStartTime) return;
+    const elapsedSeconds = Math.floor((Date.now() - focusStartTime) / 1000);
+    focusStartTime = null;
+    if (elapsedSeconds < 5) return; // bohot chota interval skip karo
+
+    const minutes = Math.round((elapsedSeconds / 60) * 100) / 100;
+
+    fetch('/study', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `subject_id={{ subject.id }}&duration=${minutes}`
+    }).catch(() => {});
+}
+
+function setMode(mode) {
+    logFocusTime(); // agar focus chal raha tha to switch se pehle record karo
+    clearInterval(timerInterval);
+    isRunning = false;
+    currentMode = mode;
+    timeLeft = modes[mode].time;
+    totalTime = modes[mode].time;
+    document.getElementById('pomoLabel').textContent = modes[mode].label;
+    document.getElementById('pomoLabelSide').textContent = sideLabels[mode];
+    setStartBtn(false);
+    updateDisplay();
+    updateCircle();
+    document.querySelectorAll('.pomo-mode-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('btn-' + (mode === 'focus' ? 'focus' : mode === 'short' ? 'short' : 'long')).classList.add('active');
+}
+
+function startTimer() {
+    if (isRunning) {
+        // Pause dabaya gaya
+        clearInterval(timerInterval);
+        isRunning = false;
+        setStartBtn(false);
+        logFocusTime(); // jitna bhi chala usko record karo
+    } else {
+        isRunning = true;
+        setStartBtn(true);
+        if (currentMode === 'focus') {
+            focusStartTime = Date.now();
+        }
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            updateDisplay();
+            updateCircle();
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                isRunning = false;
+                setStartBtn(false);
+                if (currentMode === 'focus') {
+                    sessions++;
+                    document.getElementById('sessionCount').textContent = sessions;
+                    document.getElementById('sessionCountSide').textContent = sessions;
+                    logFocusTime(); // poora session complete hua, record karo
+                }
+                alert(currentMode === 'focus' ? 'Focus session complete! Take a break.' : 'Break over! Time to focus.');
+            }
+        }, 1000);
+    }
+}
+
+function resetTimer() {
+    logFocusTime(); // reset se pehle jitna chala record karo
+    clearInterval(timerInterval);
+    isRunning = false;
+    timeLeft = totalTime;
+    setStartBtn(false);
+    updateDisplay();
+    updateCircle();
+}
+
+function updateDisplay() {
+    const hrs = Math.floor(timeLeft / 3600).toString().padStart(2, '0');
+    const mins = Math.floor((timeLeft % 3600) / 60).toString().padStart(2, '0');
+    const secs = (timeLeft % 60).toString().padStart(2, '0');
+    const display = `${hrs}:${mins}:${secs}`;
+    document.getElementById('pomoTime').textContent = display;
+    document.getElementById('pomoTimeSide').textContent = display;
+}
+
+function updateCircle() {
+    const circumference = 534;
+    const progress = (timeLeft / totalTime);
+    const offset = circumference * (1 - progress);
+    document.getElementById('pomoProgress').style.strokeDashoffset = offset;
+    const sideBar = document.getElementById('pomoSideBar');
+    if (sideBar) sideBar.style.width = (progress * 100) + '%';
+}
+
+// Agar user page band/refresh kare jab timer chal raha ho, tab bhi record karo
+window.addEventListener('beforeunload', function () {
+    if (currentMode === 'focus' && focusStartTime) {
+        const elapsedSeconds = Math.floor((Date.now() - focusStartTime) / 1000);
+        if (elapsedSeconds >= 5) {
+            const minutes = Math.round((elapsedSeconds / 60) * 100) / 100;
+            navigator.sendBeacon('/study', new Blob(
+                [`subject_id={{ subject.id }}&duration=${minutes}`],
+                { type: 'application/x-www-form-urlencoded' }
+            ));
+        }
+    }
+});
+// ===== RICH EDITOR =====
+function openEditor() {
+    document.getElementById('noteEditorOverlay').style.display = 'flex';
+    document.getElementById('noteEditor').innerHTML = '';
+    document.getElementById('editorTitle').value = '';
+    document.getElementById('noteEditor').focus();
+}
+
+function closeEditor() {
+    document.getElementById('noteEditorOverlay').style.display = 'none';
+}
+
+function saveNote() {
+    const title = document.getElementById('editorTitle').value.trim();
+    const content = document.getElementById('noteEditor').innerHTML;
+    if (!title) {
+        alert('Please enter a title!');
+        return;
+    }
+    document.getElementById('formTitle').value = title;
+    document.getElementById('formContent').value = content;
+    document.getElementById('saveNoteForm').submit();
+}
+
+function format(cmd) {
+    document.execCommand(cmd, false, null);
+    document.getElementById('noteEditor').focus();
+}
+
+function formatBlock(tag) {
+    document.execCommand('formatBlock', false, tag);
+    document.getElementById('noteEditor').focus();
+}
+
+function highlight(color) {
+    document.execCommand('hiliteColor', false, color);
+    document.getElementById('noteEditor').focus();
+}
+
+function removeHighlight() {
+    document.execCommand('hiliteColor', false, 'transparent');
+    document.getElementById('noteEditor').focus();
+}
+
+function insertImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const editor = document.getElementById('noteEditor');
+            editor.focus();
+
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'img-resize-wrapper';
+            wrapper.style.cssText = `
+                position: absolute;
+                display: inline-block;
+                margin: 0;
+                cursor: move;
+                z-index: 10;
+                left: 50px;
+                top: 50px;
+            `;
+
+            // Image
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.style.width = '300px';
+            img.style.display = 'block';
+            img.style.borderRadius = '8px';
+            img.style.border = '2px solid transparent';
+            img.style.userSelect = 'none';
+            img.draggable = false;
+
+            // Size buttons
+            const controls = document.createElement('div');
+            controls.className = 'resize-controls';
+            controls.style.display = 'none';
+            controls.innerHTML = `
+                <span style="font-size:0.8rem; color:var(--text-secondary);">Size:</span>
+                <button onclick="resizeImg(this, '100px')" class="resize-btn">XS</button>
+                <button onclick="resizeImg(this, '200px')" class="resize-btn">S</button>
+                <button onclick="resizeImg(this, '300px')" class="resize-btn">M</button>
+                <button onclick="resizeImg(this, '500px')" class="resize-btn">L</button>
+                <button onclick="resizeImg(this, '100%')" class="resize-btn">Full</button>
+                <button onclick="closeImgControls(this)" class="resize-btn"
+                        style="color:var(--danger);">✕</button>
+            `;
+
+            // Resize handle
+            const resizeHandle = document.createElement('div');
+            resizeHandle.className = 'resize-handle';
+            resizeHandle.innerHTML = '⤡';
+            resizeHandle.style.cssText = `
+                position: absolute;
+                bottom: 0;
+                right: 0;
+                width: 20px;
+                height: 20px;
+                background: var(--accent-pink);
+                border-radius: 3px 0 8px 0;
+                cursor: se-resize;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                font-size: 12px;
+                color: white;
+                user-select: none;
+                z-index: 10;
+            `;
+
+
+            img.onclick = function(ev) {
+                ev.stopPropagation();
+
+
+                document.querySelectorAll('.img-resize-wrapper').forEach(w => {
+                    w.querySelector('img').style.border = '2px solid transparent';
+                    const c = w.querySelector('.resize-controls');
+                    const h = w.querySelector('.resize-handle');
+                    if (c) c.style.display = 'none';
+                    if (h) h.style.display = 'none';
+                });
+
+                img.style.border = '2px solid var(--accent-pink)';
+                controls.style.display = 'flex';
+                resizeHandle.style.display = 'flex';
+            };
+
+
+            document.addEventListener('click', function(ev) {
+                if (!wrapper.contains(ev.target)) {
+                    img.style.border = '2px solid transparent';
+                    controls.style.display = 'none';
+                    resizeHandle.style.display = 'none';
+                }
+            });
+
+
+            let isDragging = false;
+            let dragStartX, dragStartY, wrapperStartX, wrapperStartY;
+
+            img.addEventListener('mousedown', function(e) {
+                if (e.target === resizeHandle) return;
+                e.preventDefault();
+                isDragging = true;
+                dragStartX = e.clientX;
+                dragStartY = e.clientY;
+                wrapperStartX = parseInt(wrapper.style.left) || 0;
+                wrapperStartY = parseInt(wrapper.style.top) || 0;
+                wrapper.style.cursor = 'grabbing';
+
+                document.addEventListener('mousemove', onDragMove);
+                document.addEventListener('mouseup', onDragEnd);
+            });
+
+
+            img.addEventListener('touchstart', function(e) {
+                isDragging = true;
+                dragStartX = e.touches[0].clientX;
+                dragStartY = e.touches[0].clientY;
+                wrapperStartX = parseInt(wrapper.style.left) || 0;
+                wrapperStartY = parseInt(wrapper.style.top) || 0;
+
+                document.addEventListener('touchmove', onTouchDragMove);
+                document.addEventListener('touchend', onDragEnd);
+            });
+
+            function onDragMove(e) {
+                if (!isDragging) return;
+                const dx = e.clientX - dragStartX;
+                const dy = e.clientY - dragStartY;
+                wrapper.style.left = (wrapperStartX + dx) + 'px';
+                wrapper.style.top = (wrapperStartY + dy) + 'px';
+            }
+
+            function onTouchDragMove(e) {
+                if (!isDragging) return;
+                const dx = e.touches[0].clientX - dragStartX;
+                const dy = e.touches[0].clientY - dragStartY;
+                wrapper.style.left = (wrapperStartX + dx) + 'px';
+                wrapper.style.top = (wrapperStartY + dy) + 'px';
+            }
+
+            function onDragEnd() {
+                isDragging = false;
+                wrapper.style.cursor = 'move';
+                document.removeEventListener('mousemove', onDragMove);
+                document.removeEventListener('mouseup', onDragEnd);
+                document.removeEventListener('touchmove', onTouchDragMove);
+                document.removeEventListener('touchend', onDragEnd);
+            }
+
+
+            let isResizing = false;
+            let startX, startWidth;
+
+            resizeHandle.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                isResizing = true;
+                startX = e.clientX;
+                startWidth = img.offsetWidth;
+
+                document.addEventListener('mousemove', onResizeMove);
+                document.addEventListener('mouseup', onResizeEnd);
+            });
+
+            resizeHandle.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                isResizing = true;
+                startX = e.touches[0].clientX;
+                startWidth = img.offsetWidth;
+
+                document.addEventListener('touchmove', onResizeTouchMove);
+                document.addEventListener('touchend', onResizeEnd);
+            });
+
+            function onResizeMove(e) {
+                if (!isResizing) return;
+                const diff = e.clientX - startX;
+                const newWidth = Math.max(50, startWidth + diff);
+                img.style.width = newWidth + 'px';
+            }
+
+            function onResizeTouchMove(e) {
+                if (!isResizing) return;
+                const diff = e.touches[0].clientX - startX;
+                const newWidth = Math.max(50, startWidth + diff);
+                img.style.width = newWidth + 'px';
+            }
+
+            function onResizeEnd() {
+                isResizing = false;
+                document.removeEventListener('mousemove', onResizeMove);
+                document.removeEventListener('mouseup', onResizeEnd);
+                document.removeEventListener('touchmove', onResizeTouchMove);
+                document.removeEventListener('touchend', onResizeEnd);
+            }
+
+            wrapper.appendChild(img);
+            wrapper.appendChild(controls);
+            wrapper.appendChild(resizeHandle);
+
+            // Editor must be relative positioned
+            editor.style.position = 'relative';
+            editor.appendChild(wrapper);
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function resizeImg(btn, size) {
+    const controls = btn.parentNode;
+    const wrapper = controls.parentNode;
+    const img = wrapper.querySelector('img');
+    img.style.width = size;
+}
+
+function closeImgControls(btn) {
+    const controls = btn.parentNode;
+    const wrapper = controls.parentNode;
+    const img = wrapper.querySelector('img');
+    img.style.border = '2px solid transparent';
+    controls.remove();
+}
+</script>
+
+{% endblock %}

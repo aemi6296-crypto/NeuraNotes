@@ -1,0 +1,214 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+<div class="container">
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+        <a href="/youtube_notes" class="btn btn-primary"
+           style="display: flex; align-items: center; gap: 6px; text-decoration: none;">
+            <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i>
+            Back
+        </a>
+        <div style="display: flex; gap: 10px;">
+            <button type="button" onclick="toggleEdit()" id="editToggleBtn" class="btn btn-primary"
+                    style="display: flex; align-items: center; gap: 6px;">
+                <i data-lucide="pencil" style="width: 16px; height: 16px;"></i>
+                Edit
+            </button>
+            <a href="#"
+               onclick="event.preventDefault(); showConfirm('Delete these notes permanently?', function(){ window.location='/youtube_notes/delete/{{ note.id }}'; })"
+               class="btn btn-danger" style="display: flex; align-items: center; gap: 6px; text-decoration: none;">
+                <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                Delete
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        {% if note.video_url %}
+        <a href="{{ note.video_url }}" target="_blank" rel="noopener" class="yt-note-link">
+            <i data-lucide="external-link" style="width: 13px; height: 13px;"></i>
+            {{ note.video_url }}
+        </a>
+        {% endif %}
+
+        <form method="POST" action="/youtube_notes/edit/{{ note.id }}" id="editForm">
+            <input type="hidden" name="content" id="hiddenEditContent">
+
+            <input type="text" name="title" id="titleInput" value="{{ note.video_title }}" readonly class="yt-view-title">
+
+            <div id="contentArea" class="yt-note-content" contenteditable="false">
+                {{ note.content|safe }}
+            </div>
+
+            <div id="editActions" style="display: none; gap: 10px; margin-top: 20px;">
+                <button type="submit" class="btn btn-success" style="display: flex; align-items: center; gap: 6px;">
+                    <i data-lucide="save" style="width: 16px; height: 16px;"></i>
+                    Save Changes
+                </button>
+                <button type="button" onclick="cancelEdit()" class="btn btn-danger"
+                        style="display: flex; align-items: center; gap: 6px;">
+                    <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+
+</div>
+
+<style>
+.yt-note-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    word-break: break-all;
+    margin-bottom: 8px;
+}
+.yt-view-title {
+    width: 100%;
+    padding: 8px 0;
+    margin: 10px 0 16px 0;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--accent-pink);
+    font-size: 1.5rem;
+    font-weight: 700;
+    outline: none;
+    font-family: 'Inter', sans-serif;
+}
+.yt-view-title.yt-editing {
+    border-bottom: 2px solid var(--border-color);
+}
+#contentArea {
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 4px;
+}
+#contentArea.yt-editing {
+    border: 1px solid var(--border-color);
+    padding: 14px;
+}
+.yt-note-content h3 {
+    color: #C8B4C4;
+    font-size: 1.1rem;
+    margin: 18px 0 8px 0;
+}
+.yt-note-content h3:first-child {
+    margin-top: 0;
+}
+.yt-note-content ul {
+    margin: 0 0 10px 0;
+    padding-left: 22px;
+}
+.yt-note-content li {
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin-bottom: 8px;
+}
+.yt-note-content p {
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin: 0 0 10px 0;
+}
+/* KaTeX renders on a dark background, so keep its text readable */
+.yt-note-content .katex {
+    color: var(--text-primary);
+    font-size: 1.05em;
+}
+</style>
+
+<script>
+// The raw (un-rendered) content is captured immediately, before KaTeX
+// replaces the LaTeX text with rendered math markup. Editing always works
+// against this raw copy so the stored LaTeX source is never corrupted.
+var editing = false;
+var rawContent = document.getElementById('contentArea').innerHTML;
+var originalTitle = document.getElementById('titleInput').value;
+
+function renderMath() {
+    if (window.renderMathInElement) {
+        renderMathInElement(document.getElementById('contentArea'), {
+            delimiters: [
+                { left: '\\[', right: '\\]', display: true },
+                { left: '$$', right: '$$', display: true },
+                { left: '\\(', right: '\\)', display: false },
+                { left: '$', right: '$', display: false }
+            ],
+            throwOnError: false
+        });
+    }
+}
+
+function whenKatexReady(callback) {
+    if (window.renderMathInElement) {
+        callback();
+    } else {
+        var tries = 0;
+        var poll = setInterval(function() {
+            tries++;
+            if (window.renderMathInElement) {
+                clearInterval(poll);
+                callback();
+            } else if (tries > 100) {
+                clearInterval(poll);
+            }
+        }, 50);
+    }
+}
+
+whenKatexReady(renderMath);
+
+function toggleEdit() {
+    editing = true;
+    var contentArea = document.getElementById('contentArea');
+    var titleInput = document.getElementById('titleInput');
+
+    // Show the raw LaTeX/HTML source while editing, not the rendered math
+    contentArea.innerHTML = rawContent;
+    contentArea.setAttribute('contenteditable', 'true');
+    contentArea.classList.add('yt-editing');
+
+    titleInput.removeAttribute('readonly');
+    titleInput.classList.add('yt-editing');
+
+    document.getElementById('editActions').style.display = 'flex';
+    document.getElementById('editToggleBtn').style.display = 'none';
+}
+
+function cancelEdit() {
+    editing = false;
+    var contentArea = document.getElementById('contentArea');
+    var titleInput = document.getElementById('titleInput');
+
+    contentArea.innerHTML = rawContent;
+    contentArea.setAttribute('contenteditable', 'false');
+    contentArea.classList.remove('yt-editing');
+    whenKatexReady(renderMath);
+
+    titleInput.value = originalTitle;
+    titleInput.setAttribute('readonly', 'readonly');
+    titleInput.classList.remove('yt-editing');
+
+    document.getElementById('editActions').style.display = 'none';
+    document.getElementById('editToggleBtn').style.display = 'flex';
+}
+
+document.getElementById('editForm').addEventListener('submit', function() {
+    // Submit whatever is currently in the editable area (raw source)
+    document.getElementById('hiddenEditContent').value = document.getElementById('contentArea').innerHTML;
+});
+</script>
+
+{% endblock %}

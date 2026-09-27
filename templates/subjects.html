@@ -1,0 +1,102 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container">
+
+    <div class="page-header-row">
+        <div>
+            <h1 class="page-title">
+                <i data-lucide="book-open"></i>
+                Subjects
+            </h1>
+            <p class="page-subtitle">Organize your learning journey</p>
+        </div>
+        <div class="header-deco-icon">
+            <i data-lucide="brain"></i>
+        </div>
+    </div>
+
+    <!-- Add Subject Form -->
+    <div class="card">
+        <div class="card-header-flex">
+            <div class="card-icon-badge"><i data-lucide="plus"></i></div>
+            <div>
+                <h2 class="card-title-main">Add New Subject</h2>
+                <p class="card-subtitle">Create a new subject and start organizing your notes</p>
+            </div>
+        </div>
+        <form method="POST" action="/subjects">
+            <div class="form-group">
+                <label><i data-lucide="user" class="icon-inline"></i> Subject Name</label>
+                <input type="text" name="name" placeholder="e.g. Mathematics, Physics..." required>
+            </div>
+            <div class="form-group">
+                <label><i data-lucide="palette" class="icon-inline"></i> Color</label>
+                <label class="color-select-btn" for="colorInput">
+                    <span class="color-dot-preview" id="colorPreview"></span>
+                    <span>Choose a color for this subject</span>
+                    <i data-lucide="chevron-down"></i>
+                </label>
+                <input type="color" id="colorInput" name="color" value="#b892d6"
+                       oninput="document.getElementById('colorPreview').style.background=this.value">
+            </div>
+            <div class="form-group">
+                <label><i data-lucide="tag" class="icon-inline"></i> Total Topics</label>
+                <input type="number" name="total_topics" placeholder="e.g. 10" min="0" required>
+            </div>
+            <div class="submit-row">
+                <button type="submit" class="btn-add-subject"><i data-lucide="plus"></i> Add Subject</button>
+                <span class="form-tip"><i data-lucide="lightbulb"></i> Small steps make big progress</span>
+            </div>
+        </form>
+    </div>
+
+    <div class="section-header-row">
+        <h2 class="section-title">Your Subjects</h2>
+        <span class="total-badge">{{ subjects|length }} Total Subjects</span>
+    </div>
+
+    {% if subjects %}
+    <div class="subjects-grid">
+        {% for subject in subjects %}
+        <div class="subject-card-wrapper">
+            <div class="subject-card-menu">
+                <button class="three-dots-btn" onclick="toggleMenu(event, 'menu-s{{ subject.id }}')">
+                    <i data-lucide="more-vertical"></i>
+                </button>
+                <div class="dropdown-menu" id="menu-s{{ subject.id }}">
+                    <a href="/subject/delete/{{ subject.id }}"
+                      onclick="event.preventDefault(); showConfirm('Delete {{ subject.name }}? All notes and flashcards will be deleted!', function(){ window.location='/subject/delete/{{ subject.id }}'; })"
+                       class="dropdown-item danger">
+                        <i data-lucide="trash-2" class="icon-inline"></i> Delete
+                    </a>
+                </div>
+            </div>
+            <a href="/notes/{{ subject.id }}" class="subject-card">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3>{{ subject.name }}</h3>
+                    <div class="color-dot" data-color="{{ subject.color }}"></div>
+                </div>
+
+                {% if subject.total_topics > 0 %}
+                {% set progress = (subject.completed_topics / subject.total_topics * 100)|int %}
+                {% else %}
+                {% set progress = 0 %}
+                {% endif %}
+
+                <div class="progress-bar-container">
+                    <div class="progress-bar" data-progress="{{ progress }}"></div>
+                </div>
+                <p class="progress-text">{{ subject.completed_topics }}/{{ subject.total_topics }} topics ({{ progress }}%)</p>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card" style="text-align: center; padding: 40px;">
+        <p style="color: var(--text-secondary);">No subjects yet — add one above!</p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

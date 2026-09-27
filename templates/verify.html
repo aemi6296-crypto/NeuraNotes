@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div style="display:flex; align-items:center; justify-content:center; min-height:100vh; width:100%; padding: 20px;">
+<div class="auth-container">
+    <div class="auth-logo">
+        <i data-lucide="mail-check"></i>
+    </div>
+    <h1 class="auth-title">Verify your email</h1>
+    <p class="auth-subtitle">We sent a 6-digit code to <strong>{{ email }}</strong></p>
+
+    {% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+    {% if message %}
+    <div class="alert alert-success">{{ message }}</div>
+    {% endif %}
+
+    <form method="POST" action="/verify">
+        <input type="hidden" name="email" value="{{ email }}">
+        <div class="form-group">
+            <label>Verification Code</label>
+            <input type="text" name="code" placeholder="Enter 6-digit code" maxlength="6"
+                   inputmode="numeric" pattern="[0-9]*" required
+                   style="letter-spacing: 6px; text-align:center; font-size:1.3rem;">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">
+            <i data-lucide="check" style="width:16px; height:16px;"></i>
+            Verify
+        </button>
+    </form>
+
+    <form method="POST" action="/resend-code" style="margin-top:12px;">
+        <input type="hidden" name="email" value="{{ email }}">
+        <button type="submit" class="btn btn-danger" style="width:100%;">
+            <i data-lucide="refresh-ccw" style="width:16px; height:16px;"></i>
+            Resend Code
+        </button>
+    </form>
+
+    <div class="auth-link">
+        Wrong email? <a href="/register">Register again</a>
+    </div>
+</div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.lucide) lucide.createIcons();
+});
+</script>
+{% endblock %}

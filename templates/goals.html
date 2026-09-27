@@ -1,0 +1,101 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container">
+
+    <div class="page-header-row">
+        <div>
+            <h1 class="page-title">
+                <i data-lucide="target"></i>
+                Goals
+            </h1>
+            <p class="page-subtitle">Set targets and track your study progress</p>
+        </div>
+        <div class="header-deco-icon">
+            <i data-lucide="trophy"></i>
+        </div>
+    </div>
+
+    <!-- Add Goal Form -->
+    <div class="card">
+        <div class="card-header-flex">
+            <div class="card-icon-badge"><i data-lucide="plus"></i></div>
+            <div>
+                <h2 class="card-title-main">Add New Goal</h2>
+                <p class="card-subtitle">Set a target and stay motivated to achieve it</p>
+            </div>
+        </div>
+        <form method="POST" action="/goals">
+            <div class="form-group">
+                <label><i data-lucide="pencil-line" class="icon-inline"></i> Goal Title</label>
+                <input type="text" name="title" placeholder="e.g. Complete Python in 2 weeks..." required>
+            </div>
+            <div class="form-group">
+                <label><i data-lucide="clock" class="icon-inline"></i> Target Hours</label>
+                <input type="number" name="target_hours" placeholder="e.g. 10" min="1" required>
+            </div>
+            <div class="form-group">
+                <label><i data-lucide="calendar" class="icon-inline"></i> Deadline (Optional)</label>
+                <input type="date" name="deadline">
+            </div>
+            <div class="submit-row">
+                <button type="submit" class="btn-add-subject"><i data-lucide="plus"></i> Add Goal</button>
+                <span class="form-tip"><i data-lucide="lightbulb"></i> Stay consistent, stay unstoppable</span>
+            </div>
+        </form>
+    </div>
+
+    {% set active_goals = goals|selectattr("completed", "equalto", 0)|list %}
+    {% set completed_goals = goals|selectattr("completed", "equalto", 1)|list %}
+
+    <div class="section-header-row">
+        <h2 class="section-title"><i data-lucide="zap" class="icon-inline"></i> Active Goals</h2>
+        <span class="total-badge">{{ active_goals|length }} Active</span>
+    </div>
+
+    {% if active_goals %}
+        {% for goal in active_goals %}
+        <div class="goal-item">
+            <div>
+                <div class="goal-title">{{ goal.title }}</div>
+                <div class="goal-deadline">
+                    <i data-lucide="target" class="icon-inline"></i> Target: {{ goal.target_hours }} hours
+                    {% if goal.deadline %}| <i data-lucide="clock" class="icon-inline"></i> Deadline: {{ goal.deadline }}{% endif %}
+                </div>
+            </div>
+            <a href="/goal/complete/{{ goal.id }}" class="btn btn-success">
+                <i data-lucide="check" style="width:16px; height:16px;"></i> Complete
+            </a>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="card empty-state">
+        <i data-lucide="target"></i>
+        <p style="font-size: 1.05rem; margin-bottom: 6px;">No active goals</p>
+        <p style="font-size: 0.85rem; opacity: 0.8;">Add one above to start tracking your progress.</p>
+    </div>
+    {% endif %}
+
+    {% if completed_goals %}
+    <div class="section-header-row">
+        <h2 class="section-title"><i data-lucide="check-circle" class="icon-inline"></i> Completed Goals</h2>
+        <span class="total-badge">{{ completed_goals|length }} Completed</span>
+    </div>
+        {% for goal in completed_goals %}
+        <div class="goal-item" style="opacity: 0.6;">
+            <div>
+                <div class="goal-title" style="text-decoration: line-through;">{{ goal.title }}</div>
+                <div class="goal-deadline">
+                    <i data-lucide="target" class="icon-inline"></i> {{ goal.target_hours }} hours
+                    {% if goal.deadline %}| <i data-lucide="clock" class="icon-inline"></i> {{ goal.deadline }}{% endif %}
+                </div>
+            </div>
+            <span style="color: var(--success); font-weight: bold; display:flex; align-items:center; gap:6px;">
+                <i data-lucide="check" style="width:16px; height:16px;"></i> Done
+            </span>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+</div>
+{% endblock %}

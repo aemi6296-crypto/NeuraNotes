@@ -1,0 +1,49 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div style="display:flex; align-items:center; justify-content:center; min-height:100vh; width:100%; padding: 20px;">
+<div class="auth-container">
+       <div class="auth-logo">
+        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 45px; height: 45px;">
+            <path d="M30 12c-7-3-15 2-15 10-6 1-9 6-7 12-4 5-1 13 5 15 0 7 8 10 13 6 2 5 9 5 11 0V17c-2-4-3-5-7-5Z" stroke="#201A22" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M30 20v35M30 28l-7 5m7 4 7-5m-7 12-6 5" stroke="#201A22" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="23" cy="33" r="2" fill="#201A22"/>
+            <circle cx="37" cy="32" r="2" fill="#201A22"/>
+            <path d="M38 14h13l7 7v29c0 3-2 5-5 5H38V14Z" stroke="#201A22" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M51 14v8h7M43 32h9M43 39h9M43 46h7" stroke="#201A22" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </div>
+    <h1 class="auth-title">NeuraNotes</h1>
+    <p class="auth-subtitle">Welcome back — log in to continue</p>
+
+    {% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="/login">
+        <div class="form-group">
+            <label>Email Address</label>
+            <input type="text" name="username" placeholder="Enter your email address" required>
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" name="password" placeholder="Enter password" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">
+            <i data-lucide="log-in" style="width:16px; height:16px;"></i>
+            Login
+        </button>
+    </form>
+
+    <div class="auth-link">
+        Don't have an account? <a href="/register">Register here</a>
+    </div>
+</div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.lucide) lucide.createIcons();
+});
+</script>
+{% endblock %}

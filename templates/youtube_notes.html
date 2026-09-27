@@ -1,0 +1,187 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container">
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h1 class="page-title" style="display: flex; align-items: center; gap: 10px;">
+            <i data-lucide="play-circle" style="width: 26px; height: 26px; color: var(--accent-pink);"></i>
+            YouTube to Notes
+        </h1>
+    </div>
+
+    <div class="card" style="margin-bottom: 25px;">
+        <h2 style="color: var(--accent-pink); margin-bottom: 15px;">Paste a YouTube Link</h2>
+        <form method="POST" action="/youtube_notes" id="ytForm">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <input type="url" name="youtube_url" required
+                       placeholder="https://www.youtube.com/watch?v=..."
+                       style="flex: 1; min-width: 240px; padding: 12px 15px;
+                              background: rgba(38,31,40,0.8);
+                              border: 1px solid var(--border-color);
+                              border-radius: 8px; color: var(--text-primary);
+                              font-size: 0.95rem; outline: none;">
+                <button type="submit" class="btn btn-primary" id="genNotesBtn"
+                        style="display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="sparkles" style="width: 16px; height: 16px;"></i>
+                    Generate Notes
+                </button>
+            </div>
+        </form>
+        {% if error %}
+        <p style="color: var(--danger); margin-top: 12px; font-size: 0.9rem;">{{ error }}</p>
+        {% endif %}
+    </div>
+
+    {% if generated %}
+    <div class="card yt-note-card" style="border: 1px solid var(--accent-pink);">
+        <div class="yt-note-badge">
+            {% if generated.source == 'description' %}
+                <i data-lucide="file-text" style="width: 13px; height: 13px;"></i>
+                Based on video description
+            {% else %}
+                <i data-lucide="subtitles" style="width: 13px; height: 13px;"></i>
+                Based on video captions
+            {% endif %}
+            &middot; Not saved yet
+        </div>
+
+        <form method="POST" action="/youtube_notes/save" id="saveForm">
+            <input type="hidden" name="video_url" value="{{ generated.video_url }}">
+            <input type="hidden" name="video_id" value="{{ generated.video_id }}">
+            <input type="hidden" name="source" value="{{ generated.source }}">
+            <input type="hidden" name="content" id="hiddenContent">
+
+            <input type="text" name="title" id="genTitleInput" value="{{ generated.title }}" class="yt-title-input">
+
+            <div id="genContentArea" class="yt-note-content yt-editable" contenteditable="true">
+                {{ generated.content|safe }}
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button type="submit" class="btn btn-success" style="display: flex; align-items: center; gap: 6px;">
+                    <i data-lucide="save" style="width: 16px; height: 16px;"></i>
+                    Save Notes
+                </button>
+                <a href="/youtube_notes" class="btn btn-danger"
+                   style="display: flex; align-items: center; gap: 6px; text-decoration: none;">
+                    <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                    Discard
+                </a>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+
+    <h2 style="margin-bottom: 20px; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+        <i data-lucide="clipboard-list" style="width: 20px; height: 20px;"></i>
+        Saved Notes
+    </h2>
+
+    {% if saved_notes %}
+        {% for note in saved_notes %}
+        <div class="note-list-item">
+            <a href="/youtube_notes/view/{{ note.id }}" class="note-list-title"
+               style="text-decoration: none; color: inherit; flex: 1; min-width: 0;">
+                <i data-lucide="file-text" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ note.video_title }}</span>
+                <span class="note-list-date">{{ note.created_at[:10] }}</span>
+            </a>
+            <div class="note-list-actions">
+                <a href="/youtube_notes/view/{{ note.id }}" class="btn btn-primary btn-sm"
+                   style="display: flex; align-items: center;">
+                    <i data-lucide="eye" style="width: 14px; height: 14px;"></i>
+                </a>
+                <a href="#"
+                   onclick="event.preventDefault(); showConfirm('Delete these notes permanently?', function(){ window.location='/youtube_notes/delete/{{ note.id }}'; })"
+                   class="btn btn-danger btn-sm" style="display: flex; align-items: center;">
+                    <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="card" style="text-align: center; padding: 30px;">
+        <p style="color: var(--text-secondary);">
+            No saved notes yet. Paste a YouTube link above to generate your first set of notes.
+        </p>
+    </div>
+    {% endif %}
+
+</div>
+
+<style>
+.yt-note-card {
+    margin-bottom: 25px;
+}
+.yt-note-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+.yt-title-input {
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    background: rgba(38,31,40,0.8);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--accent-pink);
+    font-size: 1.1rem;
+    font-weight: 700;
+    outline: none;
+    font-family: 'Inter', sans-serif;
+}
+.yt-editable {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 14px;
+    min-height: 100px;
+}
+.yt-note-content h3 {
+    color: #C8B4C4;
+    font-size: 1.05rem;
+    margin: 18px 0 8px 0;
+}
+.yt-note-content h3:first-child {
+    margin-top: 0;
+}
+.yt-note-content ul {
+    margin: 0 0 10px 0;
+    padding-left: 22px;
+}
+.yt-note-content li {
+    color: var(--text-primary);
+    font-size: 0.92rem;
+    line-height: 1.6;
+    margin-bottom: 6px;
+}
+.yt-note-content p {
+    color: var(--text-primary);
+    font-size: 0.92rem;
+    line-height: 1.6;
+    margin: 0 0 10px 0;
+}
+</style>
+
+<script>
+document.getElementById('ytForm').addEventListener('submit', function() {
+    var btn = document.getElementById('genNotesBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i data-lucide="loader-2" class="yt-spin" style="width:16px;height:16px;"></i> Generating...';
+});
+
+var saveForm = document.getElementById('saveForm');
+if (saveForm) {
+    saveForm.addEventListener('submit', function() {
+        document.getElementById('hiddenContent').value = document.getElementById('genContentArea').innerHTML;
+    });
+}
+</script>
+
+{% endblock %}

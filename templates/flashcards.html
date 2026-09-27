@@ -1,0 +1,87 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container">
+
+    <div class="page-header-row">
+        <div>
+            <h1 class="page-title">
+                <i data-lucide="layers"></i>
+                Flashcards
+            </h1>
+            <p class="page-subtitle">Practice with flashcards and track your quiz results</p>
+        </div>
+        <div class="header-deco-icon">
+            <i data-lucide="brain-circuit"></i>
+        </div>
+    </div>
+
+    <!-- Subjects Grid -->
+    <div class="section-header-row">
+        <h2 class="section-title"><i data-lucide="book-open" class="icon-inline"></i> Choose a Subject</h2>
+        <span class="total-badge">{{ subjects|length }} Subjects</span>
+    </div>
+
+    {% if subjects %}
+    <div class="subjects-grid" style="margin-bottom: 40px;">
+        {% for subject in subjects %}
+        <a href="/flashcards/{{ subject.id }}" class="subject-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>{{ subject.name }}</h3>
+                <div class="color-dot" data-color="{{ subject.color }}"></div>
+            </div>
+            <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 10px;">
+                Click to manage flashcards →
+            </p>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card empty-state" style="margin-bottom: 30px;">
+        <i data-lucide="book-open"></i>
+        <p style="font-size: 1.05rem; margin-bottom: 6px;">No subjects yet</p>
+        <p style="font-size: 0.85rem; opacity: 0.8;">Add a subject first to start creating flashcards.</p>
+        <a href="/subjects" class="btn btn-primary" style="margin-top: 18px;">+ Add Subject</a>
+    </div>
+    {% endif %}
+
+    <!-- Results History -->
+    <div class="section-header-row">
+        <h2 class="section-title"><i data-lucide="bar-chart-3" class="icon-inline"></i> Quiz History</h2>
+        {% if results %}<span class="total-badge">{{ results|length }} Attempts</span>{% endif %}
+    </div>
+
+    {% if results %}
+    {% for result in results %}
+    {% set pct = ((result.score / result.total) * 100) if result.total else 0 %}
+    <div class="goal-item">
+        <div>
+            <div class="goal-title">{{ result.subject_name }}</div>
+            <div class="goal-deadline">
+                <i data-lucide="target" class="icon-inline"></i> {{ result.difficulty|capitalize }} |
+                <i data-lucide="check-circle" class="icon-inline"></i> {{ result.score }}/{{ result.total }} |
+                <i data-lucide="calendar" class="icon-inline"></i> {{ result.date }}
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div class="score-badge {% if pct >= 80 %}score-high{% elif pct >= 50 %}score-mid{% else %}score-low{% endif %}">
+                {{ pct|int }}%
+            </div>
+            <a href="/flashcard/result/delete/{{ result.id }}"
+               class="btn btn-danger btn-sm"
+               onclick="return confirm('Delete this result?')">
+                <i data-lucide="trash-2" style="width:14px; height:14px;"></i>
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="card empty-state">
+        <i data-lucide="bar-chart-3"></i>
+        <p style="font-size: 1.05rem; margin-bottom: 6px;">No quiz history yet</p>
+        <p style="font-size: 0.85rem; opacity: 0.8;">Take a quiz to see your results here.</p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

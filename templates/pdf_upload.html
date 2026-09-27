@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container">
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1 class="page-title">
+            <i data-lucide="clapperboard"></i>
+            PDF to Presentation
+        </h1>
+        <a href="/notes/{{ subject_id }}" class="btn btn-primary">← Back</a>
+    </div>
+
+    <div class="card" style="max-width: 600px; margin: 0 auto; text-align: center; padding: 40px;">
+
+        <i data-lucide="file-up" style="width:56px; height:56px; color:var(--accent-pink); margin-bottom:20px;"></i>
+        <h2 style="color: var(--accent-pink); margin-bottom: 10px;">Upload Your PDF</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 30px; line-height: 1.6;">
+            Upload a PDF and we'll convert it into an animated presentation with video export!
+        </p>
+
+        <form method="POST" action="/pdf_presentation/{{ subject_id }}"
+              enctype="multipart/form-data">
+            <div class="form-group" style="text-align: left;">
+                <label>Select PDF File</label>
+                <input type="file" name="pdf_file" accept=".pdf" required
+                       style="padding: 12px; cursor: pointer; width: 100%;
+                              background: rgba(38,31,40,0.8);
+                              border: 1px solid var(--border-color);
+                              border-radius: 8px; color: var(--text-primary);">
+            </div>
+
+            <button type="submit" class="btn btn-primary"
+                    style="width: 100%; padding: 15px; font-size: 1rem; margin-top: 10px; gap:8px;">
+                <i data-lucide="rocket" style="width:16px; height:16px;"></i> Generate Presentation
+            </button>
+        </form>
+
+    </div>
+
+</div>
+{% endblock %}
