@@ -114,10 +114,10 @@ neuranotes/
 <table>
   <tr>
     <td width="50%">
-      <img src="goals.png" alt="Goals" width="100%">
+      <img src="Goals.png" alt="Goals" width="100%">
     </td>
     <td width="50%">
-      <img src="analytics.png" alt="Analytics" width="100%">
+      <img src="Analytics.png" alt="Analytics" width="100%">
     </td>
   </tr>
   <tr>
