@@ -15,7 +15,7 @@ NeuraNotes is a full-stack Flask study companion app. It brings subject organiza
 <table>
   <tr>
     <td width="50%">
-      <img src="screenshots/dashboard.png" alt="Dashboard" width="100%">
+      <img src="dashboard.png" alt="Dashboard" width="100%">
     </td>
     <td width="50%">
       <img src="screenshots/subjects.png" alt="Subjects" width="100%">
